@@ -1,0 +1,408 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==============================
+   全局基础样式
+   ============================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  color: #FFFFFF;
+  overflow: hidden;
+}
+
+/* 滚动容器 */
+.scroll-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.3) transparent;
+}
+.scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+}
+
+/* ==============================
+   手绘铅笔 SVG 滤镜
+   ============================== */
+.sketch-filter {
+  filter: url(#sketchy);
+}
+
+/* ==============================
+   微抖动效果 - 三档速度
+   ============================== */
+@keyframes jitter {
+  0%   { transform: translate(0px,  0px)  rotate(0deg); }
+  15%  { transform: translate(-0.5px, 0.4px) rotate(-0.25deg); }
+  30%  { transform: translate(0.4px, -0.5px) rotate(0.3deg); }
+  45%  { transform: translate(-0.4px,-0.3px) rotate(-0.15deg); }
+  60%  { transform: translate(0.5px,  0.3px) rotate(0.2deg); }
+  75%  { transform: translate(-0.3px, 0.5px) rotate(-0.3deg); }
+  90%  { transform: translate(0.3px, -0.3px) rotate(0.1deg); }
+  100% { transform: translate(0px,  0px)  rotate(0deg); }
+}
+
+@keyframes jitterText {
+  0%   { transform: translate(0px,  0px); }
+  20%  { transform: translate(0.3px, -0.2px); }
+  40%  { transform: translate(-0.3px, 0.3px); }
+  60%  { transform: translate(0.2px,  0.2px); }
+  80%  { transform: translate(-0.2px,-0.3px); }
+  100% { transform: translate(0px,  0px); }
+}
+
+@keyframes jitterSvg {
+  0%   { transform: translate(0px,  0px) rotate(0deg) scale(1); }
+  10%  { transform: translate(-0.6px, 0.5px) rotate(-0.3deg) scale(1.001); }
+  20%  { transform: translate(0.5px, -0.6px) rotate(0.4deg) scale(0.999); }
+  30%  { transform: translate(-0.5px,-0.4px) rotate(-0.2deg) scale(1.001); }
+  40%  { transform: translate(0.6px,  0.4px) rotate(0.25deg) scale(1); }
+  50%  { transform: translate(-0.4px, 0.6px) rotate(-0.35deg) scale(0.999); }
+  60%  { transform: translate(0.4px, -0.4px) rotate(0.15deg) scale(1.001); }
+  70%  { transform: translate(-0.6px,-0.3px) rotate(-0.2deg) scale(1); }
+  80%  { transform: translate(0.3px,  0.5px) rotate(0.3deg) scale(0.999); }
+  90%  { transform: translate(-0.3px, 0.3px) rotate(-0.1deg) scale(1.001); }
+  100% { transform: translate(0px,  0px) rotate(0deg) scale(1); }
+}
+
+/* 抖动应用类 */
+.jitter {
+  animation: jitter 0.09s infinite;
+  will-change: transform;
+}
+
+.jitter-text {
+  animation: jitterText 0.11s infinite;
+  display: inline-block;
+  will-change: transform;
+}
+
+.jitter-svg {
+  animation: jitterSvg 0.1s infinite;
+  will-change: transform;
+}
+
+/* 降低动效（无障碍） */
+@media (prefers-reduced-motion: reduce) {
+  .jitter, .jitter-text, .jitter-svg {
+    animation: none;
+  }
+}
+
+/* ==============================
+   手绘边框样式
+   ============================== */
+.sketch-border {
+  border: 2px solid #FFFFFF;
+  border-radius: 2px;
+  box-shadow:
+    1px 1px 0 rgba(255,255,255,0.15),
+    -1px -1px 0 rgba(255,255,255,0.1),
+    2px -1px 0 rgba(255,255,255,0.08),
+    -1px 2px 0 rgba(255,255,255,0.08);
+  position: relative;
+}
+
+.sketch-border::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 3px;
+  transform: rotate(-0.3deg);
+  pointer-events: none;
+}
+
+.sketch-border::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  transform: rotate(0.4deg);
+  pointer-events: none;
+}
+
+/* ==============================
+   对话气泡
+   ============================== */
+.speech-bubble {
+  position: relative;
+  border: 2px solid #FFFFFF;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: #000000;
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 24px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 12px solid #FFFFFF;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 25px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid #000000;
+}
+
+/* 右侧气泡（尖角在右下） */
+.speech-bubble-right::before {
+  left: auto;
+  right: 24px;
+}
+.speech-bubble-right::after {
+  left: auto;
+  right: 25px;
+}
+
+/* ==============================
+   页面切换动效
+   ============================== */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.5s ease forwards;
+}
+
+.page-exit {
+  animation: pageExit 0.4s ease forwards;
+}
+
+/* ==============================
+   标签弹出动效
+   ============================== */
+@keyframes tagPop {
+  0%   { opacity: 0; transform: scale(0.2) rotate(-8deg); }
+  60%  { transform: scale(1.1) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.tag-pop {
+  animation: tagPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ==============================
+   打字机效果
+   ============================== */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typewriter-cursor::after {
+  content: '|';
+  animation: blink 0.8s step-end infinite;
+  margin-left: 2px;
+}
+
+/* ==============================
+   手绘线条动画 (SVG stroke)
+   ============================== */
+.draw-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 1.5s ease forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ==============================
+   入场屏专属
+   ============================== */
+@keyframes pulse-sketch {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+.landing-pulse {
+  animation: pulse-sketch 2s ease-in-out infinite, jitter 0.09s infinite;
+}
+
+/* ==============================
+   底部导航栏
+   ============================== */
+.nav-item {
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 4px 12px;
+  position: relative;
+}
+
+.nav-item.active {
+  font-weight: 700;
+  font-size: 1.35rem;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: #FFFFFF;
+  transform: scaleX(0);
+  transition: transform 0.25s ease;
+}
+
+.nav-item.active::after,
+.nav-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* ==============================
+   瀑布流布局
+   ============================== */
+.masonry-grid {
+  column-count: 3;
+  column-gap: 16px;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
+
+/* ==============================
+   图标悬停效果
+   ============================== */
+.icon-hover {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.icon-hover:hover {
+  opacity: 0.75;
+  transform: scale(1.05);
+}
+
+/* 正方体线框悬停 */
+.cube-btn {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.cube-btn:hover {
+  opacity: 0.7;
+}
+
+/* ==============================
+   输入框手绘风格
+   ============================== */
+.sketch-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #FFFFFF;
+  color: #FFFFFF;
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  outline: none;
+  padding: 6px 2px;
+  width: 100%;
+  caret-color: #FFFFFF;
+}
+
+.sketch-input::placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+/* ==============================
+   影视卡片
+   ============================== */
+.film-card {
+  border: 1.5px solid rgba(255,255,255,0.8);
+  border-radius: 2px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+.film-card::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* ==============================
+   时间轴节点
+   ============================== */
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  background: #000;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.timeline-dot.active {
+  background: #FFFFFF;
+}
+.timeline-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+}
