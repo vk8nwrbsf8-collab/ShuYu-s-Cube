@@ -1,267 +1,236 @@
 /**
- * HomePage - 【I】 首页 / 自我介绍
+ * HomePage - 【I】首页
  *
- * 头像：参考图片 - 直发垂肩、细框圆眼镜、下垂半睁眼、项链
- * 标签：围绕头像四周，出现后保持，不遮挡面部
- * 正方体：页面最底部与导航栏平行
+ * 布局方案：
+ *   - 正方体用 200×200px 的 div 居中放置
+ *   - 外层套一个 560×560 的相对定位容器，作为标签的定位父元素
+ *   - 标签用 absolute + 精确的 top/left/right/bottom 定位在容器内
+ *   - 正方体在容器正中心 (left:180, top:180)
+ *
+ * 正方体尺寸：200px，容器 560×480
+ * 正方体中心在容器内: cx=280, cy=240
+ * 标签距正方体边缘约 20~40px 的间距
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// ============================================================
-// 头像 SVG — 参考图片：直发、眼镜、下垂眼、项链
-// ============================================================
-function AvatarSVG({ onClick }) {
-  return (
-    <svg
-      width="240"
-      height="320"
-      viewBox="0 0 240 320"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="jitter-svg cursor-pointer select-none"
-      style={{ filter: 'url(#sketchy)' }}
-      onClick={onClick}
-      aria-label="舒予的手绘头像"
-    >
-      {/* ── 身体/肩膀（白色上衣轮廓） ── */}
-      <path d="M60,295 Q60,270 72,260 Q88,248 108,244 L108,232 Q120,238 120,238 Q120,238 132,232 L132,244 Q152,248 168,260 Q180,270 180,295"
-        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* 领口 */}
-      <path d="M100,246 Q120,256 140,246" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+// ─────────────────────────────────────────────
+// CSS 关键帧（动态注入避免 Tailwind 冲突）
+// ─────────────────────────────────────────────
+const GLOBAL_STYLES = `
+  @keyframes cubeRotate {
+    from { transform: rotateX(-22deg) rotateY(0deg); }
+    to   { transform: rotateX(-22deg) rotateY(360deg); }
+  }
+  @keyframes tagAppear {
+    0%   { opacity: 0; transform: scale(0.3) rotate(var(--r, 0deg)); }
+    65%  { transform: scale(1.1) rotate(var(--r, 0deg)); }
+    100% { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); }
+  }
+  /* 各档颤动：频率/幅度各异，模拟手持便利贴 */
+  @keyframes tagJitter0 {
+    0%,100%{ transform: rotate(var(--r,0deg)) translate(0px,0px); }
+    20%   { transform: rotate(calc(var(--r,0deg) + 0.5deg)) translate(0.4px,-0.3px); }
+    40%   { transform: rotate(calc(var(--r,0deg) - 0.4deg)) translate(-0.3px,0.4px); }
+    60%   { transform: rotate(calc(var(--r,0deg) + 0.3deg)) translate(0.3px,0.3px); }
+    80%   { transform: rotate(calc(var(--r,0deg) - 0.5deg)) translate(-0.4px,-0.2px); }
+  }
+  @keyframes tagJitter1 {
+    0%,100%{ transform: rotate(var(--r,0deg)) translate(0px,0px); }
+    25%   { transform: rotate(calc(var(--r,0deg) - 0.6deg)) translate(0.5px,0.3px); }
+    50%   { transform: rotate(calc(var(--r,0deg) + 0.4deg)) translate(-0.4px,-0.4px); }
+    75%   { transform: rotate(calc(var(--r,0deg) - 0.3deg)) translate(0.3px,-0.3px); }
+  }
+  @keyframes tagJitter2 {
+    0%,100%{ transform: rotate(var(--r,0deg)) translate(0px,0px); }
+    33%   { transform: rotate(calc(var(--r,0deg) + 0.7deg)) translate(-0.5px,0.5px); }
+    66%   { transform: rotate(calc(var(--r,0deg) - 0.5deg)) translate(0.4px,-0.5px); }
+  }
+  @keyframes tagJitter3 {
+    0%,100%{ transform: rotate(var(--r,0deg)) translate(0px,0px); }
+    20%   { transform: rotate(calc(var(--r,0deg) + 0.4deg)) translate(0.6px,0.2px); }
+    45%   { transform: rotate(calc(var(--r,0deg) - 0.6deg)) translate(-0.3px,0.5px); }
+    70%   { transform: rotate(calc(var(--r,0deg) + 0.3deg)) translate(0.2px,-0.4px); }
+    90%   { transform: rotate(calc(var(--r,0deg) - 0.2deg)) translate(-0.4px,0.3px); }
+  }
+`;
 
-      {/* ── 颈部 ── */}
-      <path d="M108,232 L108,246" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <path d="M132,232 L132,246" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-
-      {/* ── 项链 ── */}
-      <path d="M108,246 Q120,252 132,246" stroke="white" strokeWidth="1.2" strokeLinecap="round" fill="none" style={{ opacity: 0.7 }} />
-      <circle cx="120" cy="252" r="2" stroke="white" strokeWidth="1.2" fill="none" style={{ opacity: 0.7 }} />
-      <circle cx="120" cy="252" r="0.8" fill="white" style={{ opacity: 0.6 }} />
-
-      {/* ── 脸型（圆润、稍宽）── */}
-      <path
-        d="M76,128 Q72,114 74,100 Q76,80 88,66 Q102,50 120,48 Q138,50 152,66 Q164,80 166,100 Q168,114 164,128 L162,178 Q160,202 144,212 Q134,218 120,218 Q106,218 96,212 Q80,202 78,178 Z"
-        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"
-      />
-
-      {/* ── 头发：参考图 - 中分直发，两侧垂肩，有层次感 ── */}
-      {/* 左侧头发大块（从发际线垂到肩膀） */}
-      <path
-        d="M88,66 Q72,58 64,72 Q54,90 56,120 Q56,150 58,178 Q60,200 66,220 Q72,238 76,250 Q84,258 90,256"
-        stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
-      />
-      {/* 左侧头发内侧轮廓（紧贴脸） */}
-      <path
-        d="M88,66 Q82,80 78,100 Q76,120 76,140"
-        stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" style={{ opacity: 0.5 }}
-      />
-      {/* 左侧发尾 */}
-      <path
-        d="M66,220 Q62,232 68,244 Q74,252 82,252"
-        stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"
-      />
-
-      {/* 右侧头发大块 */}
-      <path
-        d="M152,66 Q168,58 176,72 Q186,90 184,120 Q184,150 182,178 Q180,200 174,220 Q168,238 164,250 Q156,258 150,256"
-        stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
-      />
-      {/* 右侧头发内侧 */}
-      <path
-        d="M152,66 Q158,80 162,100 Q164,120 164,140"
-        stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" style={{ opacity: 0.5 }}
-      />
-      {/* 右侧发尾 */}
-      <path
-        d="M174,220 Q178,232 172,244 Q166,252 158,252"
-        stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"
-      />
-
-      {/* 头顶发际线（中分，微微拱） */}
-      <path d="M88,66 Q104,48 120,46 Q136,48 152,66"
-        stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"
-      />
-      {/* 中分线（极淡） */}
-      <line x1="120" y1="46" x2="120" y2="66" stroke="white" strokeWidth="0.8" style={{ opacity: 0.2 }} />
-
-      {/* 发丝细节（左侧几根） */}
-      <path d="M80,90 Q76,110 76,130" stroke="white" strokeWidth="0.8" strokeLinecap="round" fill="none" style={{ opacity: 0.3 }} />
-      <path d="M84,82 Q80,100 80,120" stroke="white" strokeWidth="0.7" strokeLinecap="round" fill="none" style={{ opacity: 0.22 }} />
-      {/* 发丝细节（右侧几根） */}
-      <path d="M160,90 Q164,110 164,130" stroke="white" strokeWidth="0.8" strokeLinecap="round" fill="none" style={{ opacity: 0.3 }} />
-      <path d="M156,82 Q160,100 160,120" stroke="white" strokeWidth="0.7" strokeLinecap="round" fill="none" style={{ opacity: 0.22 }} />
-
-      {/* ── 耳朵 ── */}
-      <path d="M76,136 Q68,140 68,150 Q68,160 76,163" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      <path d="M164,136 Q172,140 172,150 Q172,160 164,163" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-
-      {/* ── 眉毛（参考图：短平眉）── */}
-      <path d="M92,112 Q104,108 116,110" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <path d="M124,110 Q136,108 148,112" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-
-      {/* ── 眼镜（细框圆框，参考图）── */}
-      {/* 左镜框 - 圆形偏方 */}
-      <rect x="86" y="118" width="38" height="26" rx="11" ry="10"
-        stroke="white" strokeWidth="1.8" fill="none" />
-      {/* 右镜框 */}
-      <rect x="136" y="118" width="38" height="26" rx="11" ry="10"
-        stroke="white" strokeWidth="1.8" fill="none" />
-      {/* 镜桥（细） */}
-      <path d="M124,130 Q130,127 136,130" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      {/* 镜腿 */}
-      <path d="M86,124 Q78,122 74,126" stroke="white" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-      <path d="M174,124 Q182,122 166,126" stroke="white" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-
-      {/* ── 眼睛（下垂半睁）── */}
-      {/* 左眼：上眼睑弧度向下垂 */}
-      <path d="M90,128 Q105,122 122,128" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-      {/* 左眼：下眼睑（贴近，眼缝窄） */}
-      <path d="M92,132 Q105,135 120,132" stroke="white" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      {/* 左眼珠（偏下，体现下垂感） */}
-      <circle cx="106" cy="130" r="4.5" stroke="white" strokeWidth="1.4" fill="none" />
-      <circle cx="106" cy="131" r="2" fill="white" />
-      {/* 左眼高光 */}
-      <circle cx="108" cy="128" r="1" fill="white" style={{ opacity: 0.6 }} />
-
-      {/* 右眼：上眼睑 */}
-      <path d="M140,128 Q155,122 172,128" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-      {/* 右眼：下眼睑 */}
-      <path d="M142,132 Q155,135 170,132" stroke="white" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      {/* 右眼珠 */}
-      <circle cx="156" cy="130" r="4.5" stroke="white" strokeWidth="1.4" fill="none" />
-      <circle cx="156" cy="131" r="2" fill="white" />
-      {/* 右眼高光 */}
-      <circle cx="158" cy="128" r="1" fill="white" style={{ opacity: 0.6 }} />
-
-      {/* ── 腮红（参考图：大面积圆形腮红）── */}
-      {/* 左腮红 */}
-      {[...Array(8)].map((_, i) => (
-        <circle key={`lb${i}`}
-          cx={88 + (i % 3) * 5 - 5}
-          cy={160 + Math.floor(i / 3) * 5}
-          r={1.2}
-          fill="white"
-          style={{ opacity: 0.08 + i * 0.01 }}
-        />
-      ))}
-      {/* 右腮红 */}
-      {[...Array(8)].map((_, i) => (
-        <circle key={`rb${i}`}
-          cx={148 + (i % 3) * 5 - 5}
-          cy={160 + Math.floor(i / 3) * 5}
-          r={1.2}
-          fill="white"
-          style={{ opacity: 0.08 + i * 0.01 }}
-        />
-      ))}
-
-      {/* ── 鼻子（极简小三角/点）── */}
-      <circle cx="120" cy="166" r="1.8" stroke="white" strokeWidth="1.2" fill="none" style={{ opacity: 0.65 }} />
-
-      {/* ── 嘴（微撇，参考图）── */}
-      <path d="M108,190 Q114,187 120,189 Q126,187 132,190" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-      {/* 下嘴唇（稍厚） */}
-      <path d="M110,192 Q120,196 130,192" stroke="white" strokeWidth="1.4" strokeLinecap="round" fill="none" style={{ opacity: 0.55 }} />
-    </svg>
-  );
-}
-
-// ============================================================
-// 对话气泡组件
-// ============================================================
-function SpeechBubble({ text, visible, isTyping = false, typedText = '' }) {
-  if (!visible && !isTyping) return null;
-  const displayText = isTyping ? typedText : text;
+// ─────────────────────────────────────────────
+// 旋转 3D 线框正方体
+// ─────────────────────────────────────────────
+function RotatingCube({ onClick, size = 200 }) {
+  const h = size / 2;
+  const faces = [
+    { t: `translateZ(${h}px)` },
+    { t: `rotateY(180deg) translateZ(${h}px)` },
+    { t: `rotateY(-90deg) translateZ(${h}px)` },
+    { t: `rotateY(90deg) translateZ(${h}px)` },
+    { t: `rotateX(90deg) translateZ(${h}px)` },
+    { t: `rotateX(-90deg) translateZ(${h}px)` },
+  ];
   return (
     <div
-      className={`speech-bubble jitter-text transition-opacity duration-500 ${visible || isTyping ? 'opacity-100' : 'opacity-0'}`}
-      style={{ whiteSpace: 'pre-wrap', minWidth: '120px', maxWidth: '260px', lineHeight: 1.6 }}
+      onClick={onClick}
+      style={{ width: size, height: size, perspective: 700, cursor: 'pointer', flexShrink: 0 }}
     >
-      {displayText}
-      {isTyping && <span className="typewriter-cursor" />}
+      <div style={{
+        width: size, height: size,
+        position: 'relative',
+        transformStyle: 'preserve-3d',
+        animation: 'cubeRotate 9s linear infinite',
+        willChange: 'transform',
+      }}>
+        {faces.map(({ t }, i) => (
+          <div key={i} style={{
+            position: 'absolute', inset: 0,
+            transform: t,
+            border: '1.8px solid rgba(255,255,255,0.8)',
+            background: 'transparent',
+          }}>
+            {/* 面内对角线 */}
+            <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity:0.12 }}>
+              <line x1="0" y1="0" x2={size} y2={size} stroke="white" strokeWidth="1" />
+              <line x1={size} y1="0" x2="0" y2={size} stroke="white" strokeWidth="1" />
+            </svg>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ============================================================
-// 标签 — 固定坐标，围绕头像外侧，全部保持可见
-// 头像中心约在容器 (0, 0)，头像尺寸 240×320
-// 标签不覆盖面部区域（大致 x: -80~80, y: -60~120）
-// ============================================================
-const TAG_POSITIONS = [
-  // ── 正上方（发顶以上） ──
-  { x:  -16, y: -205, delay: 0.0 },
-  // ── 左上 ──
-  { x: -195, y: -170, delay: 0.5 },
-  // ── 左侧高 ──
-  { x: -210, y:  -60, delay: 1.0 },
-  // ── 左侧中 ──
-  { x: -205, y:   50, delay: 1.5 },
-  // ── 左下（肩部以外） ──
-  { x: -170, y:  155, delay: 2.0 },
-  // ── 右上 ──
-  { x:  130, y: -170, delay: 2.5 },
-  // ── 右侧高 ──
-  { x:  150, y:  -60, delay: 3.0 },
-  // ── 右侧中 ──
-  { x:  145, y:   50, delay: 3.5 },
-  // ── 右下（肩部以外） ──
-  { x:  110, y:  155, delay: 4.0 },
+// ─────────────────────────────────────────────
+// 对话气泡
+// ─────────────────────────────────────────────
+function SpeechBubble({ text, visible, isTyping = false, typedText = '' }) {
+  const show = visible || isTyping;
+  return (
+    <div style={{
+      opacity: show ? 1 : 0,
+      transform: show ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(6px)',
+      transition: 'opacity 0.4s ease, transform 0.4s ease',
+      pointerEvents: 'none',
+      fontFamily: "'Caveat', cursive",
+      fontSize: '1.08rem',
+      padding: '10px 16px',
+      border: '1.5px solid rgba(255,255,255,0.85)',
+      borderRadius: '10px',
+      background: '#000',
+      color: '#fff',
+      whiteSpace: 'pre-wrap',
+      maxWidth: 220,
+      lineHeight: 1.6,
+      position: 'relative',
+    }}>
+      {isTyping ? typedText : (show ? text : '')}
+      {isTyping && <span className="typewriter-cursor" />}
+      {/* 尾巴 */}
+      <svg style={{ position:'absolute', bottom:-11, left:18 }}
+        width="14" height="12" viewBox="0 0 14 12" fill="none">
+        <path d="M1,0 L0,12 L13,2" stroke="white" strokeWidth="1.5"
+          strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 标签
+// ─────────────────────────────────────────────
+// 容器 700×560，正方体 200×200 居中 left:250, top:180
+// 正方体视觉中心约 (350, 280)，视觉边界约：左230 右470 上155 下405
+// 9 个标签均匀围绕四周：上3 / 左2 / 右2 / 下2
+// 每个标签保持独立旋转角和颤动档，高低微错落保留凌乱感
+//
+// rot:    静止旋转角（deg），标签天然歪斜
+// jitter: 颤动动画档位 (0-3)，各档频率不同
+// dur:    颤动周期
+// 容器 720×640，正方体居中偏下15px: left=260, top=235，正方体中心 cx=360, cy=335
+// 10 个标签以 (360,335) 为圆心，半径 r=250，每隔 36° 均匀分布
+// raw_x = 360 + 250*cosθ,  raw_y = 335 + 250*sinθ
+// left  = raw_x - 标签半宽补偿,  top = raw_y - 12
+const TAG_DEFS = [
+  // θ=-90°  正上方      raw(360,  85)
+  { text: '沪漂研究生',         rot:  1,  jitter: 2, dur: '0.12s', style: { top:  61, left: 324 } },
+  // θ=-54°  右上偏上    raw(507, 133)
+  { text: '网易云黑胶五级VIP',  rot: -3,  jitter: 3, dur: '0.14s', style: { top: 109, left: 436 } },
+  // θ=-18°  右偏上      raw(598, 258)
+  { text: '被逼PDE的产品经理',  rot: -2,  jitter: 0, dur: '0.11s', style: { top: 234, left: 503 } },
+  // θ=18°   右偏下      raw(598, 412)
+  { text: '讨厌夏天第一人',     rot:  3,  jitter: 0, dur: '0.08s', style: { top: 388, left: 524 } },
+  // θ=54°   右下偏下    raw(507, 537)
+  { text: '咖啡严重依赖患者',   rot:  2,  jitter: 2, dur: '0.11s', style: { top: 513, left: 428 } },
+  // θ=90°   正下方      raw(360, 585)
+  { text: '抹茶杀手',           rot: -4,  jitter: 3, dur: '0.10s', style: { top: 561, left: 326 } },
+  // θ=126°  左下偏下    raw(213, 537)
+  { text: '诺贝尔文学奖读者',   rot:  3,  jitter: 1, dur: '0.13s', style: { top: 513, left: 118 } },
+  // θ=162°  左偏下      raw(122, 412)
+  { text: 'AI Coder',           rot:  3,  jitter: 1, dur: '0.09s', style: { top: 388, left:  92 } },
+  // θ=198°  左偏上      raw(122, 258)
+  { text: '自我矛盾界先驱',     rot: -2,  jitter: 2, dur: '0.09s', style: { top: 234, left:  56 } },
+  // θ=234°  左上偏上    raw(213, 133)
+  { text: '台州市热心市民',     rot: -3,  jitter: 0, dur: '0.11s', style: { top: 109, left: 150 } },
 ];
 
-const TAGS = [
-  '台州市热心市民',
-  '美团点评产品人',
-  '沪漂研究生',
-  '自我矛盾界先驱',
-  '诺贝尔文学奖读者',
-  '网易云黑胶五级VIP',
-  '讨厌夏天第一人',
-  '抹茶杀手',
-  '咖啡严重依赖患者',
-];
+function TagLabel({ text, rot, jitter, dur, style, delay, tagKey, onDismiss, allShown }) {
+  const jitterName = `tagJitter${jitter}`;
+  const elRef = useRef(null);
+  const dismissedRef = useRef(false);
 
-// 每个标签的尾巴指向头像中心
-function TagBubble({ text, position, visible }) {
-  const isLeft = position.x < 0;
+  const handleClick = () => {
+    if (!allShown || dismissedRef.current) return;
+    dismissedRef.current = true;
+    const el = elRef.current;
+    if (!el) return;
+    // 直接操作 DOM：叠加淡出过渡，不打断正在运行的颤动 animation
+    el.style.transition = 'opacity 0.28s ease';
+    el.style.opacity = '0';
+    setTimeout(() => onDismiss?.(), 300);
+  };
 
   return (
     <div
-      className="absolute"
+      ref={elRef}
+      key={`${tagKey}-${text}`}
+      onClick={handleClick}
       style={{
-        left: '50%',
-        top: '50%',
-        // translate 使标签以其自身中心定位
-        transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
+        position: 'absolute',
+        ...style,
+        zIndex: 20,
+        pointerEvents: allShown ? 'auto' : 'none',
         opacity: 0,
-        animation: visible
-          ? `tagPop 0.38s cubic-bezier(0.175,0.885,0.32,1.275) ${position.delay}s forwards`
-          : 'none',
-        zIndex: 5,
-        pointerEvents: 'none',
+        cursor: allShown ? 'pointer' : 'default',
+        // 先做弹出动画，结束后 onAnimationEnd 切换为颤动
+        animation: `tagAppear 0.42s cubic-bezier(0.175,0.885,0.32,1.275) ${delay}s forwards`,
+        willChange: 'transform, opacity',
+        '--r': `${rot}deg`,
+      }}
+      // 弹出动画结束后换成颤动动画
+      onAnimationEnd={(e) => {
+        if (e.animationName === 'tagAppear') {
+          e.currentTarget.style.animation = `${jitterName} ${dur} ease-in-out infinite`;
+          e.currentTarget.style.opacity = '1';
+        }
       }}
     >
-      <div
-        style={{
-          fontFamily: "'Caveat', cursive",
-          fontSize: '0.88rem',
-          padding: '5px 12px',
-          whiteSpace: 'nowrap',
-          background: '#000',
-          color: '#FFF',
-          border: '1.5px solid rgba(255,255,255,0.85)',
-          borderRadius: '3px',
-          boxShadow: '1px 1px 0 rgba(255,255,255,0.12), -1px -1px 0 rgba(255,255,255,0.08)',
-          position: 'relative',
-        }}
-      >
+      <div style={{
+        fontFamily: "'Caveat', cursive",
+        fontSize: '0.88rem',
+        padding: '5px 13px',
+        whiteSpace: 'nowrap',
+        background: '#000',
+        color: '#fff',
+        border: '1.5px solid rgba(255,255,255,0.82)',
+        borderRadius: '3px',
+        position: 'relative',
+        lineHeight: 1.45,
+      }}>
         {text}
-        {/* 手绘边框副线 */}
+        {/* 手绘副笔（微偏移） */}
         <div style={{
           position: 'absolute', inset: '-3px',
-          border: '1px solid rgba(255,255,255,0.2)',
+          border: '1px solid rgba(255,255,255,0.16)',
           borderRadius: '4px',
-          transform: 'rotate(-0.4deg)',
+          transform: `rotate(${-rot * 0.6}deg)`,
           pointerEvents: 'none',
         }} />
       </div>
@@ -269,275 +238,436 @@ function TagBubble({ text, position, visible }) {
   );
 }
 
-// ============================================================
-// 手绘正方体按钮 SVG
-// ============================================================
-function CubeButton({ onClick }) {
+// ─────────────────────────────────────────────
+// 右下角小正方体按钮
+// ─────────────────────────────────────────────
+function SmallCubeBtn({ onClick }) {
   return (
-    <div
-      className="flex flex-col items-center gap-1 cursor-pointer group"
-      onClick={onClick}
-      style={{ userSelect: 'none' }}
-    >
-      <svg
-        width="48" height="48" viewBox="0 0 56 52" fill="none"
-        className="jitter-svg group-hover:opacity-70 transition-opacity"
-        style={{ filter: 'url(#sketchy)' }}
-        aria-label="打开对话"
-      >
-        {/* 等轴正视图正方体（无透视） */}
-        {/* 顶面菱形 */}
+    <div className="flex flex-col items-center gap-1 cursor-pointer group"
+      onClick={onClick} style={{ userSelect: 'none' }}>
+      <svg width="40" height="40" viewBox="0 0 56 52" fill="none"
+        className="jitter-svg group-hover:opacity-60 transition-opacity duration-200"
+        style={{ filter: 'url(#sketchy)' }}>
         <polygon points="28,4 50,14 28,24 6,14"
           stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-        {/* 左面 */}
         <polygon points="6,14 6,40 28,50 28,24"
           stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-        {/* 右面 */}
         <polygon points="50,14 50,40 28,50 28,24"
           stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-        {/* 中轴线（装饰） */}
-        <line x1="28" y1="4" x2="28" y2="50" stroke="white" strokeWidth="0.5" style={{ opacity: 0.2 }} />
       </svg>
-      <span
-        className="jitter-text group-hover:opacity-60 transition-opacity"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '0.72rem', opacity: 0.4, letterSpacing: '0.06em' }}
-      >
-        问问我
-      </span>
     </div>
   );
 }
 
-// ============================================================
-// Coze API 调用（流式）
-// ============================================================
-const COZE_API_TOKEN = 'YOUR_COZE_API_TOKEN';
-const COZE_BOT_ID   = 'YOUR_COZE_BOT_ID';
+// ─────────────────────────────────────────────
+// Agent API
+// ─────────────────────────────────────────────
+const AGENT_API_URL = 'https://bhydrjmw8y.coze.site/stream_run';
+const AGENT_TOKEN   = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjA2YjNiMmZlLTVhZjYtNGFiMy05ODM5LWRmNDZiNTMzODBlNyJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbIjFNcTFLemU5SnV6RWhsMUdwVE1KcWZOb1REdHJPSGxhIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzgxNDUxOTAzLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjUxMjY0ODUzNzM4MjU4NDczIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3NjUxMjc3NjY0NDQ3MTAzMDExIn0.yOKj8zrdXjVZGuEPqBOZl9I6X6spT18aSR-oJYfol2TYSVUjC8iZGcRUHO_1zbTjLp2GzKRv28PH2RWE7mE7Sbk4vRZ8YyH27egSZ5WeLx7eKgH0K8V7MIQ8njYNzE98FJhJkppYLNy0jGrR_J63-qusb7y22BZlQ96BIBIinU6lI2WkuxD3kM8TK239ah3fpNje2NM99Mg4c9uhbbkn06H6AqmIOh3cn3bflqNwUkPNy4RdQ3WmG1vOPrJg-ol3_FnuiSBs_gFD26fKr_lcHUtM9zNcIdUPd5tO_-zdIw_LkJsm0nxrsDXFLcLpqQ9lRMakL0z4l01QGh-YrGA2Ng';
+const AGENT_SESSION_ID  = 'xkAbuDPcrnUK7BxwWWn02';
+const AGENT_PROJECT_ID  = 7651250950921011243;
 
-async function callCozeStreaming(userInput, onChunk, onDone, onError) {
+async function callAgentStreaming(text, onChunk, onDone, onError) {
   try {
-    const response = await fetch('https://api.coze.cn/v3/chat', {
+    const res = await fetch(AGENT_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${COZE_API_TOKEN}`,
+        'Authorization': `Bearer ${AGENT_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        bot_id: COZE_BOT_ID,
-        user_id: 'shuyu_visitor',
-        stream: true,
-        auto_save_history: false,
-        additional_messages: [{ role: 'user', content: userInput, content_type: 'text' }],
+        content: {
+          query: {
+            prompt: [{ type: 'text', content: { text } }],
+          },
+        },
+        type: 'query',
+        session_id: AGENT_SESSION_ID,
+        project_id: AGENT_PROJECT_ID,
       }),
     });
-    if (!response.ok) { onError('API 请求失败，请稍后重试。'); return; }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
+    if (!res.ok) { onError(`请求失败 (${res.status})`); return; }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder('utf-8');
+    let buf = '';
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (line.startsWith('data:')) {
-          const jsonStr = line.slice(5).trim();
-          if (!jsonStr || jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            if (parsed.type === 'answer' && parsed.content) onChunk(parsed.content);
-            if (parsed.type === 'done') onDone();
-          } catch { /* 忽略 */ }
-        }
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const ln of lines) {
+        // 只处理 data: 行，跳过 event: 行
+        if (!ln.startsWith('data:')) continue;
+        const raw = ln.slice(5).trim();
+        if (!raw || raw === '[DONE]') continue;
+        try {
+          const p = JSON.parse(raw);
+          // 实际格式：{ type: 'answer', content: { answer: '嗨', ... }, finish: false }
+          if (p.type === 'answer' && p.content?.answer) {
+            onChunk(p.content.answer);
+          }
+          // finish: true 且非 answer 类型 = 流结束
+          if (p.finish === true && p.type !== 'answer') {
+            onDone();
+            return;
+          }
+        } catch { /* 忽略解析失败的行 */ }
       }
     }
     onDone();
-  } catch {
-    onError('网络错误，请检查连接。');
-  }
+  } catch (e) { onError('网络错误：' + e.message); }
 }
 
-// ============================================================
-// HomePage 主组件
-// ============================================================
-export default function HomePage() {
-  const [introVisible, setIntroVisible] = useState(true);
-  const [tagsVisible,  setTagsVisible]  = useState(false);
-  const [cubeMode,     setCubeMode]     = useState(false);
-  const [inputValue,   setInputValue]   = useState('');
-  const [aiAnswer,     setAiAnswer]     = useState('');
-  const [isStreaming,  setIsStreaming]   = useState(false);
-  const [aiVisible,    setAiVisible]    = useState(false);
+// ─────────────────────────────────────────────
+// 浮动聊天面板（自定义 UI，黑底白字手绘风）
+// ─────────────────────────────────────────────
+function CozeChatPanel({ open, onClose }) {
+  const [messages,    setMessages]    = useState([]); // [{role:'user'|'ai', text}]
+  const [inputValue,  setInputValue]  = useState('');
+  const [isStreaming, setIsStreaming]  = useState(false);
+  const inputRef   = useRef(null);
+  const scrollRef  = useRef(null);
+  const FONT = "'Caveat', cursive";
 
-  const introTimerRef = useRef(null);
-  const inputRef      = useRef(null);
-
-  // 5秒后淡出介绍气泡
+  // 面板打开时自动 focus
   useEffect(() => {
-    introTimerRef.current = setTimeout(() => setIntroVisible(false), 5000);
-    return () => clearTimeout(introTimerRef.current);
-  }, []);
+    if (open) setTimeout(() => inputRef.current?.focus(), 260);
+  }, [open]);
 
-  const handleAvatarClick = useCallback(() => {
-    if (cubeMode) return;
-    clearTimeout(introTimerRef.current);
-    setIntroVisible(false);
-    setAiVisible(false);
-    setAiAnswer('');
-    // 重置再触发，确保动画重新播放
-    setTagsVisible(false);
-    setTimeout(() => setTagsVisible(true), 50);
-  }, [cubeMode]);
+  // 新消息后滚到底部
+  useEffect(() => {
+    if (scrollRef.current)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
 
-  const handleCubeClick = useCallback(() => {
-    setTagsVisible(false);
-    setIntroVisible(false);
-    setCubeMode(true);
-    setAiAnswer('');
-    setAiVisible(true);
-    setTimeout(() => inputRef.current?.focus(), 300);
-  }, []);
-
-  const handleSubmit = useCallback((e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!inputValue.trim() || isStreaming) return;
-    const question = inputValue.trim();
+    const q = inputValue.trim();
+    if (!q || isStreaming) return;
     setInputValue('');
-    setAiAnswer('');
+    // 追加用户消息
+    setMessages(prev => [...prev, { role: 'user', text: q }]);
+    // 追加 AI 占位
+    setMessages(prev => [...prev, { role: 'ai', text: '' }]);
     setIsStreaming(true);
-    callCozeStreaming(
-      question,
-      (chunk) => setAiAnswer(prev => prev + chunk),
+    callAgentStreaming(
+      q,
+      chunk => setMessages(prev => {
+        const arr = [...prev];
+        arr[arr.length - 1] = { role: 'ai', text: arr[arr.length - 1].text + chunk };
+        return arr;
+      }),
       () => setIsStreaming(false),
-      (err)  => { setAiAnswer(err); setIsStreaming(false); }
+      err => {
+        setMessages(prev => {
+          const arr = [...prev];
+          arr[arr.length - 1] = { role: 'ai', text: err };
+          return arr;
+        });
+        setIsStreaming(false);
+      },
     );
-  }, [inputValue, isStreaming]);
+  };
 
-  const bubbleText = cubeMode
-    ? (aiAnswer || (isStreaming ? '' : '怎么了？'))
-    : '我是舒予。';
-  const bubbleVisible = cubeMode ? aiVisible : introVisible;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 120,
+        right: 120,
+        width: 340,
+        height: 500,
+        zIndex: 9998,
+        display: 'flex',
+        flexDirection: 'column',
+        // 弹出动画，始终挂载保留历史
+        transform: open ? 'scale(1) translateY(0)' : 'scale(0.92) translateY(16px)',
+        opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
+        transition: 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease',
+        transformOrigin: 'bottom right',
+      }}
+    >
+      {/* 外框：手绘感多层边框 */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        background: '#000',
+        border: '1.5px solid rgba(255,255,255,0.82)',
+        borderRadius: 4,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 4px 4px 0 rgba(255,255,255,0.06)',
+      }}>
+        {/* 副笔（手绘偏移层） */}
+        <div style={{
+          position: 'absolute', inset: '-3px',
+          border: '1px solid rgba(255,255,255,0.13)',
+          borderRadius: 6,
+          pointerEvents: 'none',
+          transform: 'rotate(-0.3deg)',
+        }} />
+
+        {/* 顶栏 */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 14px 8px',
+          borderBottom: '1px solid rgba(255,255,255,0.12)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontFamily: FONT, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+            ASK SHUYU ·
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+              cursor: 'pointer', fontFamily: FONT, fontSize: '1.2rem', lineHeight: 1,
+              padding: '0 2px',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => e.target.style.color = '#fff'}
+            onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
+          >✕</button>
+        </div>
+
+        {/* 消息列表 */}
+        <div
+          ref={scrollRef}
+          style={{
+            flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex',
+            flexDirection: 'column', gap: 10,
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(255,255,255,0.2) transparent',
+          }}
+        >
+          {messages.length === 0 && (
+            <div style={{
+              fontFamily: FONT, fontSize: '0.95rem', color: 'rgba(255,255,255,0.3)',
+              textAlign: 'center', marginTop: 40, lineHeight: 1.8,
+            }}>
+              嗨，有什么想问我的？
+            </div>
+          )}
+          {messages.map((msg, i) => (
+            <div key={i} style={{
+              display: 'flex',
+              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+            }}>
+              <div style={{
+                maxWidth: '82%',
+                fontFamily: FONT,
+                fontSize: '0.98rem',
+                lineHeight: 1.65,
+                padding: '7px 12px',
+                border: '1.5px solid rgba(255,255,255,0.75)',
+                borderRadius: 3,
+                background: msg.role === 'user' ? 'rgba(255,255,255,0.07)' : '#000',
+                color: '#fff',
+                position: 'relative',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}>
+                {/* AI 气泡的副笔 */}
+                {msg.role === 'ai' && (
+                  <div style={{
+                    position: 'absolute', inset: '-2px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 4,
+                    pointerEvents: 'none',
+                    transform: 'rotate(0.4deg)',
+                  }} />
+                )}
+                {msg.text || (isStreaming && i === messages.length - 1
+                  ? <span style={{ opacity: 0.4 }}>···</span>
+                  : '')}
+                {/* 流式打字游标 */}
+                {isStreaming && i === messages.length - 1 && msg.text && (
+                  <span style={{
+                    display: 'inline-block', width: 2, height: '1em',
+                    background: 'rgba(255,255,255,0.7)',
+                    marginLeft: 2, verticalAlign: 'text-bottom',
+                    animation: 'jitter 0.6s steps(1) infinite',
+                  }} />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 输入框 */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 12px 10px',
+            borderTop: '1px solid rgba(255,255,255,0.12)',
+            flexShrink: 0,
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            disabled={isStreaming}
+            placeholder="输入你的问题…"
+            maxLength={300}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', outline: 'none',
+              color: '#fff', fontFamily: FONT, fontSize: '1rem',
+              caretColor: 'rgba(255,255,255,0.8)',
+            }}
+          />
+          <button
+            type="submit"
+            disabled={isStreaming || !inputValue.trim()}
+            style={{
+              background: 'none', border: 'none', cursor: isStreaming || !inputValue.trim() ? 'default' : 'pointer',
+              color: isStreaming || !inputValue.trim() ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.85)',
+              fontFamily: FONT, fontSize: '1.4rem', lineHeight: 1,
+              transition: 'color 0.15s',
+              padding: '0 2px',
+              flexShrink: 0,
+            }}
+          >→</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 主组件
+// ─────────────────────────────────────────────
+export default function HomePage() {
+  const [tagsShown,    setTagsShown]    = useState(false);
+  const [tagKey,       setTagKey]       = useState(0);
+  const [visibleTags,  setVisibleTags]  = useState([]);   // 当前可见标签索引集合
+  const [allShown,     setAllShown]     = useState(false); // 全部标签已出现
+  const [chatOpen,     setChatOpen]     = useState(false); // Coze 面板开关
+
+  // 标签全部弹出完成后标记 allShown
+  useEffect(() => {
+    if (!tagsShown) { setAllShown(false); return; }
+    const lastDelay = (TAG_DEFS.length - 1) * 0.18 + 0.42; // 最后一个标签弹出完成
+    const t = setTimeout(() => setAllShown(true), lastDelay * 1000 + 50);
+    return () => clearTimeout(t);
+  }, [tagsShown, tagKey]);
+
+  // 点击大正方体 → 弹出/重置标签
+  const handleCubeClick = useCallback(() => {
+    setTagsShown(false);
+    setAllShown(false);
+    setTagKey(k => k + 1);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        setTagsShown(true);
+        setVisibleTags(TAG_DEFS.map((_, i) => i));
+      })
+    );
+  }, []);
+
+  // 点击标签 → 从可见列表移除
+  const handleTagDismiss = useCallback((idx) => {
+    setVisibleTags(prev => prev.filter(i => i !== idx));
+  }, []);
+
+  // 点击小正方体 → 切换 Coze 面板
+  const handleSmallCubeClick = useCallback(() => {
+    setChatOpen(prev => !prev);
+  }, []);
+
+      // 容器尺寸：正方体 200px，半径230，中心(350,300)
+      const CONTAINER_W = 720;
+      const CONTAINER_H = 640;
+      const CUBE_SIZE   = 200;
 
   return (
     <div className="relative w-full h-full flex flex-col items-center overflow-hidden">
-      {/* SVG 全局滤镜 */}
-      <svg width="0" height="0" className="absolute pointer-events-none">
+
+      {/* 注入全局动画 */}
+      <style>{GLOBAL_STYLES}</style>
+
+      {/* SVG 滤镜 */}
+      <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
           <filter id="sketchy" x="-5%" y="-5%" width="110%" height="110%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.065" numOctaves="2" seed="5" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="2" seed="8" result="n" />
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
       </svg>
 
-      {/* ── 主舞台（撑满中间区域，底部留给正方体）── */}
-      <div
-        className="relative flex items-center justify-center flex-1 w-full"
-        style={{ minHeight: 0 }}
-      >
-        {/* 中心定位锚点（头像中心） */}
-        <div className="relative" style={{ width: 0, height: 0 }}>
+      {/* ── 主舞台 ── */}
+      <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
 
-          {/* ── 头像（以锚点为中心）── */}
-          <div
-            className="absolute z-10"
-            style={{ width: 240, height: 320, left: -120, top: -160 }}
-          >
-            <AvatarSVG onClick={handleAvatarClick} />
+        {/* 定位容器：固定宽高，所有标签相对于它 absolute 定位 */}
+        <div style={{
+          position: 'relative',
+          width: CONTAINER_W,
+          height: CONTAINER_H,
+          flexShrink: 0,
+        }}>
+
+          {/* 正方体：居中偏下15px */}
+          <div style={{
+            position: 'absolute',
+            left: (CONTAINER_W - CUBE_SIZE) / 2,   // 260
+            top:  (CONTAINER_H - CUBE_SIZE) / 2 + 15,  // 235
+            zIndex: 10,
+          }}>
+            <RotatingCube onClick={handleCubeClick} size={CUBE_SIZE} />
           </div>
 
-          {/* ── 介绍/AI 气泡（头像右上方）── */}
-          <div
-            className="absolute z-20 transition-all duration-500"
-            style={{
-              right: -150,
-              top: -200,
-              opacity: bubbleVisible || (isStreaming && cubeMode) ? 1 : 0,
-              transform: bubbleVisible || (isStreaming && cubeMode) ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(6px)',
-              pointerEvents: 'none',
-              maxWidth: 260,
-            }}
-          >
-            <SpeechBubble
-              text={bubbleText}
-              visible={bubbleVisible}
-              isTyping={isStreaming && cubeMode}
-              typedText={aiAnswer}
-            />
-          </div>
-
-          {/* ── 9 个标签（头像外侧，保持可见）── */}
-          {TAGS.map((tag, i) => (
-            <TagBubble
-              key={`${tag}-${tagsVisible}`}
-              text={tag}
-              position={TAG_POSITIONS[i]}
-              visible={tagsVisible}
-            />
-          ))}
+          {/* 9 个标签 */}
+          {tagsShown && TAG_DEFS.map(({ text, rot, jitter, dur, style }, i) =>
+            visibleTags.includes(i) ? (
+              <TagLabel
+                key={`${tagKey}-${i}`}
+                text={text}
+                rot={rot}
+                jitter={jitter}
+                dur={dur}
+                style={style}
+                delay={i * 0.18}
+                tagKey={tagKey}
+                allShown={allShown}
+                onDismiss={() => handleTagDismiss(i)}
+              />
+            ) : null
+          )}
         </div>
       </div>
 
-      {/* ── 底部行：AI 输入框 + 正方体（与导航栏同高度）── */}
-      <div
-        className="w-full flex items-end justify-end px-12"
-        style={{ height: 72, paddingBottom: 16, position: 'relative', zIndex: 30 }}
-      >
-        {/* AI 输入框（cubeMode 时展开） */}
-        <div
-          style={{
-            overflow: 'hidden',
-            maxWidth: cubeMode ? 280 : 0,
-            opacity: cubeMode ? 1 : 0,
-            transition: 'max-width 0.4s ease, opacity 0.3s ease',
-            marginRight: 16,
-          }}
-        >
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-center gap-2 sketch-border px-3 py-2"
-            style={{ background: '#000', width: 280 }}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              className="sketch-input flex-1"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="输入你想问的…"
-              disabled={isStreaming}
-              maxLength={200}
-              style={{ fontSize: '1rem' }}
-            />
-            <button
-              type="submit"
-              disabled={isStreaming || !inputValue.trim()}
-              className="bg-transparent border-none text-white/60 hover:text-white transition-colors cursor-pointer"
-              style={{ fontFamily: "'Caveat', cursive", fontSize: '1.2rem' }}
-            >
-              →
-            </button>
-          </form>
-        </div>
+      {/* ── 底部占位（保持底部导航栏间距） ── */}
+      <div style={{ height: 72 }} />
 
-        {/* 正方体按钮 */}
-        <CubeButton onClick={handleCubeClick} />
+      {/* ── 右下角小正方体按钮（fixed，底部导航栏上方，左移） ── */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 72,
+          right: 68,
+          zIndex: 9999,
+          cursor: 'pointer',
+        }}
+        title={chatOpen ? '关闭对话' : '和 Shuyu 的 AI 聊聊'}
+      >
+        <SmallCubeBtn onClick={handleSmallCubeClick} />
       </div>
 
-      {/* ── 角落装饰文字 ── */}
-      <div
-        className="absolute top-8 left-12 jitter-text pointer-events-none"
-        style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.18em' }}
-      >
+      {/* ── Coze 浮动聊天面板（始终挂载，保留对话历史） ── */}
+      <CozeChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
+
+      {/* 角落装饰文字 */}
+      <div className="absolute top-8 left-12 jitter-text pointer-events-none"
+        style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.6rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.18em' }}>
         SHUYU · 2002 · TAIZHOU
       </div>
-      <div
-        className="absolute top-8 right-12 jitter-text pointer-events-none"
-        style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.1em', textAlign: 'right' }}
-      >
-        CLICK TO KNOW MORE
+      <div className="absolute top-8 right-12 jitter-text pointer-events-none"
+        style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.6rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.1em', textAlign: 'right' }}>
+        CLICK CUBE TO EXPLORE
       </div>
     </div>
   );

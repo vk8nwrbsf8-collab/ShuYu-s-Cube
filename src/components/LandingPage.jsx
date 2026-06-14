@@ -114,12 +114,20 @@ export default function LandingPage({ onEnter }) {
       </div>
 
       {/* 下方提示文字 */}
-      <p
-        className="jitter-text mt-10 text-white/50"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem', letterSpacing: '0.12em' }}
-      >
-        点击进入
-      </p>
+      <div className="flex flex-col items-center mt-10 gap-1">
+        <p
+          className="jitter-text text-white/40"
+          style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.78rem', letterSpacing: '0.28em' }}
+        >
+          CLICK TO ENTER
+        </p>
+        <p
+          className="jitter-text text-white/85"
+          style={{ fontFamily: "'Special Elite', monospace", fontSize: '1.55rem', letterSpacing: '0.18em' }}
+        >
+          SHUYU&rsquo;s Cube
+        </p>
+      </div>
 
       {/* 角落装饰线 */}
       <svg

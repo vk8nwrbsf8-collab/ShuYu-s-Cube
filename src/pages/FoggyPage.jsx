@@ -8,8 +8,9 @@
  *
  * 子页面左上角有手绘返回箭头
  */
-import { useState, useRef, useEffect } from 'react';
-import { films, albums, bassCovers } from '../data/hobbies';
+import { useState, useEffect } from 'react';
+import { usePlayer } from '../context/PlayerContext';
+import { films, albums, bassCovers, bassCollectionUrl } from '../data/hobbies';
 
 // ──────────────────────────────────────────────────────────
 // SVG 图标：场记板
@@ -137,164 +138,223 @@ function FilmSubPage({ onBack }) {
         className="jitter-text mb-8"
         style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
       >
-        影视收藏
+        Movie
       </h2>
 
       <div className="scroll-container flex-1">
-        <div className="grid grid-cols-1 gap-6 pr-4">
+        <div className="grid grid-cols-2 gap-5 pr-4">
           {films.map((film) => (
-            <div key={film.id} className="film-card flex gap-0 overflow-hidden" style={{ minHeight: 120 }}>
-              {/* 左侧：海报占位 */}
+            <div key={film.id} className="film-card flex gap-0 overflow-hidden" style={{ height: 180 }}>
+              {/* 左侧：海报 */}
               <div
-                className="flex-shrink-0 flex items-center justify-center"
-                style={{
-                  width: 90,
-                  background: film.color,
-                  borderRight: '1.5px solid rgba(255,255,255,0.3)',
-                }}
+                className="flex-shrink-0"
+                style={{ width: 120, flexShrink: 0, position: 'relative' }}
               >
                 {film.poster ? (
-                  <img src={film.poster} alt={film.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={film.poster}
+                    alt={film.title}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      width: '100%', height: '100%',
+                      objectFit: 'cover', objectPosition: 'center top',
+                      display: 'block',
+                    }}
+                  />
                 ) : (
-                  <svg width="36" height="44" viewBox="0 0 36 44" fill="none" style={{ opacity: 0.25 }}>
-                    <rect x="2" y="2" width="32" height="40" rx="2" stroke="white" strokeWidth="1.5" fill="none" />
-                    <line x1="2" y1="12" x2="34" y2="12" stroke="white" strokeWidth="1" />
-                    <line x1="12" y1="2" x2="12" y2="12" stroke="white" strokeWidth="1" />
-                    <line x1="24" y1="2" x2="24" y2="12" stroke="white" strokeWidth="1" />
-                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="36" height="44" viewBox="0 0 36 44" fill="none" style={{ opacity: 0.25 }}>
+                      <rect x="2" y="2" width="32" height="40" rx="2" stroke="white" strokeWidth="1.5" fill="none" />
+                      <line x1="2" y1="12" x2="34" y2="12" stroke="white" strokeWidth="1" />
+                      <line x1="12" y1="2" x2="12" y2="12" stroke="white" strokeWidth="1" />
+                      <line x1="24" y1="2" x2="24" y2="12" stroke="white" strokeWidth="1" />
+                    </svg>
+                  </div>
+                )}
+                {/* 评分徽章 */}
+                {film.rating && (
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1,
+                    background: 'rgba(0,0,0,0.7)', textAlign: 'center',
+                    padding: '3px 0',
+                    fontFamily: "'Special Elite', monospace",
+                    fontSize: '0.72rem',
+                    color: '#f5c518',
+                    letterSpacing: '0.05em',
+                  }}>
+                    ★ {film.rating}
+                  </div>
                 )}
               </div>
 
               {/* 右侧：文字 */}
-              <div className="flex-1 p-4">
-                <div className="flex items-baseline gap-3 mb-1">
-                  <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.2rem', fontWeight: 700 }}>{film.title}</h3>
-                  <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.72rem', opacity: 0.45 }}>{film.year}</span>
-                  <span style={{ fontFamily: "'Caveat', cursive", fontSize: '0.82rem', opacity: 0.5 }}>{film.genre}</span>
-                </div>
-                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.9rem', opacity: 0.55, marginBottom: 6 }}>
-                  导演：{film.director}　主演：{film.cast}
-                </p>
-                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.95rem', opacity: 0.8, fontStyle: 'italic' }}>
-                  " {film.note} "
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────
-// 子页：音乐
-// ──────────────────────────────────────────────────────────
-function CarouselOrList({ photos, songs }) {
-  const [idx, setIdx] = useState(0);
-
-  // 如果有照片，展示轮播
-  if (photos && photos.length > 0) {
-    return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <img
-          src={photos[idx]}
-          alt="live"
-          className="w-full h-full object-cover"
-          style={{ borderRadius: 2 }}
-        />
-        {photos.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-            {photos.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setIdx(i)}
-                className="w-2 h-2 rounded-full border border-white transition-all bg-transparent cursor-pointer"
-                style={{ background: i === idx ? 'white' : 'transparent' }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // 无照片：展示歌曲列表
-  return (
-    <div className="w-full h-full flex flex-col justify-center p-4">
-      <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.82rem', opacity: 0.45, marginBottom: 8, letterSpacing: '0.1em' }}>
-        喜爱歌曲
-      </p>
-      {songs.map((s, i) => (
-        <div
-          key={s}
-          className="flex items-center gap-3 py-2"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}
-        >
-          <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.7rem', opacity: 0.35, minWidth: 18 }}>
-            {String(i + 1).padStart(2, '0')}
-          </span>
-          <span style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem', opacity: 0.85 }}>{s}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MusicSubPage({ onBack }) {
-  return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 80px' }}>
-      <BackButton onClick={onBack} />
-      <h2
-        className="jitter-text mb-8"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
-      >
-        音乐收藏
-      </h2>
-
-      <div className="scroll-container flex-1">
-        <div className="flex flex-col gap-6 pr-4">
-          {albums.map((album) => (
-            <div
-              key={album.id}
-              className="sketch-border flex overflow-hidden"
-              style={{ minHeight: 160 }}
-            >
-              {/* 左：专辑信息 */}
-              <div
-                className="flex flex-col justify-center p-5"
-                style={{ width: '45%', borderRight: '1.5px solid rgba(255,255,255,0.2)' }}
-              >
-                {/* 专辑封面占位 */}
-                <div
-                  className="flex items-center justify-center mb-4"
-                  style={{ width: 64, height: 64, border: '1.5px solid rgba(255,255,255,0.4)', borderRadius: 2 }}
-                >
-                  {album.cover ? (
-                    <img src={album.cover} alt={album.albumTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <VinylIcon />
+              <div className="flex-1 p-3" style={{ borderLeft: '1.5px solid rgba(255,255,255,0.15)' }}>
+                <div className="flex flex-wrap items-baseline gap-2 mb-1">
+                  <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2 }}>{film.title}</h3>
+                  {film.titleEn && (
+                    <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.62rem', opacity: 0.35 }}>{film.titleEn}</span>
                   )}
                 </div>
-                <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.15rem', fontWeight: 700, marginBottom: 2 }}>
-                  {album.albumTitle}
-                </h3>
-                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.9rem', opacity: 0.6, marginBottom: 4 }}>
-                  {album.artist} · {album.year}
+                <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', opacity: 0.35, marginBottom: 4, letterSpacing: '0.04em' }}>
+                  {film.year} · {film.genre}
                 </p>
-                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.88rem', opacity: 0.7, fontStyle: 'italic' }}>
-                  " {album.note} "
+                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.82rem', opacity: 0.5, marginBottom: 2 }}>
+                  导演：{film.director}
                 </p>
-              </div>
-
-              {/* 右：现场照片 / 歌单 */}
-              <div className="flex-1" style={{ minHeight: 160 }}>
-                <CarouselOrList photos={album.livePhotos} songs={album.favSongs} />
+                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.78rem', opacity: 0.4 }}>
+                  {film.cast}
+                </p>
               </div>
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 子页：音乐（播放状态来自全局 PlayerContext）
+// ──────────────────────────────────────────────────────────
+function MusicSubPage({ onBack }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const album = albums[activeIdx];
+
+  // 从全局 Context 取播放状态
+  const { playingTrack, isPlaying, playSong } = usePlayer();
+
+  return (
+    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 0' }}>
+
+      <BackButton onClick={onBack} />
+      <h2
+        className="jitter-text mb-6"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
+      >
+        Music
+      </h2>
+
+      {/* 内容区：底部留 BottomNav + PlayerBar 高度 */}
+      <div className="flex gap-10 min-h-0" style={{ flex: 1, paddingBottom: playingTrack ? 16 : 16 }}>
+        {/* 左：专辑列表（约占 2.3 份） */}
+        <div className="flex flex-col gap-2 scroll-container" style={{ flex: '2.3', minWidth: 0 }}>
+          {albums.map((a, i) => (
+            <button
+              key={a.id}
+              onClick={() => setActiveIdx(i)}
+              className="flex items-center gap-5 group text-left"
+              style={{
+                background: i === activeIdx ? 'rgba(255,255,255,0.07)' : 'transparent',
+                borderLeft: i === activeIdx ? '2px solid rgba(255,255,255,0.5)' : '2px solid transparent',
+                borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+                borderRadius: 0,
+                padding: '12px 16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                color: 'white',
+              }}
+            >
+              {/* 封面 */}
+              <div style={{
+                width: 62, height: 62, borderRadius: 3, overflow: 'hidden', flexShrink: 0,
+                border: '1px solid rgba(255,255,255,0.12)',
+                filter: i === activeIdx ? 'none' : 'grayscale(30%)',
+                transition: 'filter 0.3s',
+              }}>
+                {a.cover
+                  ? <img src={a.cover} alt={a.albumTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100%', background: '#1a1a1a' }} />
+                }
+              </div>
+              {/* 文字 */}
+              <div className="flex-1 min-w-0">
+                <p style={{
+                  fontFamily: "'Caveat', cursive", fontSize: '1.05rem',
+                  fontWeight: i === activeIdx ? 700 : 400,
+                  opacity: i === activeIdx ? 1 : 0.55,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  marginBottom: 3, transition: 'opacity 0.2s',
+                }}>
+                  {a.albumTitle}
+                </p>
+                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.82rem', opacity: i === activeIdx ? 0.55 : 0.3 }}>
+                  {a.artist}
+                  {a.year ? <span style={{ marginLeft: 8, fontSize: '0.75rem', opacity: 0.6 }}>{a.year}</span> : null}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* 分割线 */}
+        <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0, alignSelf: 'stretch' }} />
+
+        {/* 右：曲目列表 */}
+        <div className="flex flex-col" style={{ flex: 1, minWidth: 0 }}>
+          {/* 专辑信息头 */}
+          <div className="flex items-center gap-4 mb-5">
+            <div style={{ width: 48, height: 48, borderRadius: 3, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.15)' }}>
+              <img src={album.cover} alt={album.albumTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div className="min-w-0">
+              <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.95rem', fontWeight: 700, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {album.albumTitle}
+              </p>
+              <a href={album.url} target="_blank" rel="noopener noreferrer"
+                style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.6rem', opacity: 0.35, letterSpacing: '0.06em', textDecoration: 'none', color: 'inherit' }}>
+                {album.artist} · {album.year} · 网易云 ↗
+              </a>
+            </div>
+          </div>
+
+          {/* 曲目列表 */}
+          <div className="scroll-container flex-1">
+            <div className="flex flex-col">
+              {(album.tracks || []).map((track, ti) => {
+                const isActive = playingTrack?.id === track.id;
+                return (
+                  <button
+                    key={track.id}
+                    onClick={() => playSong(track, album, ti)}
+                    className="flex items-center gap-3 group text-left"
+                    style={{
+                      background: 'transparent', border: 'none', color: 'white',
+                      padding: '7px 4px',
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      cursor: 'pointer', width: '100%',
+                    }}
+                  >
+                    {/* 序号 / 播放状态 */}
+                    <span style={{
+                      fontFamily: "'Special Elite', monospace", fontSize: '0.6rem',
+                      opacity: isActive ? 0.8 : 0.25, width: 20, textAlign: 'right', flexShrink: 0,
+                      color: isActive ? 'white' : 'inherit',
+                    }}>
+                      {isActive && isPlaying
+                        ? '▶'
+                        : isActive && !isPlaying
+                          ? '‖'
+                          : String(ti + 1).padStart(2, '0')}
+                    </span>
+                    {/* 曲名 */}
+                    <span style={{
+                      fontFamily: "'Caveat', cursive", fontSize: '0.9rem',
+                      opacity: isActive ? 1 : 0.7,
+                      fontWeight: isActive ? 700 : 400,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}>
+                      {track.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 播放器条现在在 App 层全局渲染，此处无需重复 */}
     </div>
   );
 }
@@ -303,19 +363,6 @@ function MusicSubPage({ onBack }) {
 // 子页：贝斯
 // ──────────────────────────────────────────────────────────
 function BassSubPage({ onBack }) {
-  const [activeId, setActiveId] = useState(bassCovers[0].id);
-  const videoRef = useRef(null);
-
-  const activeCover = bassCovers.find(c => c.id === activeId);
-
-  // 切歌时重新加载视频
-  useEffect(() => {
-    if (videoRef.current && activeCover?.videoUrl) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {});
-    }
-  }, [activeId]);
-
   return (
     <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 80px' }}>
       <BackButton onClick={onBack} />
@@ -323,94 +370,85 @@ function BassSubPage({ onBack }) {
         className="jitter-text mb-8"
         style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
       >
-        弹拨 · Bass Cover
+        Bass Cover
       </h2>
 
       <div className="flex flex-1 gap-8 overflow-hidden">
-        {/* 左：歌曲列表（1/3） */}
-        <div
-          className="scroll-container flex-shrink-0"
-          style={{ width: '32%', borderRight: '1px solid rgba(255,255,255,0.15)' }}
+        {/* 左：小红书合集入口（无边框，铺满整个左侧） */}
+        <a
+          href={bassCollectionUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 flex flex-col items-center justify-center gap-6 group cursor-pointer"
+          style={{ width: '38%', textDecoration: 'none', color: 'inherit' }}
         >
-          {bassCovers.map((cover) => (
-            <div
-              key={cover.id}
-              onClick={() => setActiveId(cover.id)}
-              className={`py-4 px-3 cursor-pointer transition-all duration-200 border-b`}
-              style={{
-                borderColor: 'rgba(255,255,255,0.1)',
-                background: activeId === cover.id ? 'rgba(255,255,255,0.06)' : 'transparent',
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: '1.05rem',
-                  fontWeight: activeId === cover.id ? 700 : 400,
-                  opacity: activeId === cover.id ? 1 : 0.6,
-                  marginBottom: 2,
-                }}
-              >
-                {cover.title}
-              </p>
-              <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.85rem', opacity: 0.45 }}>
-                {cover.artist}
-              </p>
-              {activeId === cover.id && (
-                <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.68rem', opacity: 0.35, marginTop: 2 }}>
-                  {cover.duration}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* 右：视频播放区（2/3） */}
-        <div className="flex-1 flex flex-col gap-4">
-          {/* 视频播放器 */}
-          <div
-            className="sketch-border flex items-center justify-center overflow-hidden"
-            style={{ flex: '1 1 auto', minHeight: 200, background: '#0a0a0a' }}
-          >
-            {activeCover?.videoUrl ? (
-              <video
-                ref={videoRef}
-                controls
-                className="w-full h-full object-contain"
-                style={{ maxHeight: 360 }}
-              >
-                <source src={activeCover.videoUrl} type="video/mp4" />
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontFamily: "'Caveat',cursive" }}>
-                  您的浏览器不支持 video 标签
-                </p>
-              </video>
-            ) : (
-              <div className="flex flex-col items-center gap-4 opacity-30">
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="jitter-svg">
-                  <circle cx="32" cy="32" r="28" stroke="white" strokeWidth="2" fill="none" />
-                  <polygon points="26,22 26,42 46,32" stroke="white" strokeWidth="2" strokeLinejoin="round" fill="none" />
-                </svg>
-                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.95rem' }}>
-                  视频待上传
-                </p>
-              </div>
-            )}
+          {/* 贝斯手绘图标 */}
+          <svg width="72" height="72" viewBox="0 0 90 90" fill="none" className="jitter-svg group-hover:opacity-100 transition-opacity" style={{ opacity: 0.65, filter: 'url(#sketchy)' }}>
+            <rect x="40" y="6" width="10" height="42" rx="3" stroke="white" strokeWidth="2" fill="none" />
+            <ellipse cx="45" cy="6" rx="8" ry="6" stroke="white" strokeWidth="2" fill="none" />
+            <line x1="40" y1="16" x2="50" y2="16" stroke="white" strokeWidth="1.2" />
+            <line x1="40" y1="22" x2="50" y2="22" stroke="white" strokeWidth="1.2" />
+            <line x1="40" y1="28" x2="50" y2="28" stroke="white" strokeWidth="1.2" />
+            <line x1="40" y1="34" x2="50" y2="34" stroke="white" strokeWidth="1.2" />
+            <path d="M35,48 Q22,50 20,60 Q19,70 25,76 Q30,82 40,82 L50,82 Q60,82 65,76 Q71,70 70,60 Q68,50 55,48 L50,47 L50,48 L40,48 L40,47 Z" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <line x1="41" y1="8" x2="41" y2="68" stroke="white" strokeWidth="0.8" style={{ opacity: 0.5 }} />
+            <line x1="43" y1="8" x2="43" y2="68" stroke="white" strokeWidth="0.8" style={{ opacity: 0.5 }} />
+            <line x1="47" y1="8" x2="47" y2="68" stroke="white" strokeWidth="0.8" style={{ opacity: 0.5 }} />
+            <line x1="49" y1="8" x2="49" y2="68" stroke="white" strokeWidth="0.8" style={{ opacity: 0.5 }} />
+          </svg>
+          <div className="text-center">
+            <p style={{ fontFamily: "'Caveat', cursive", fontSize: '1.2rem', fontWeight: 700, marginBottom: 6, opacity: 0.9 }}>
+              小烂贝斯手试图cover记录
+            </p>
+            <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', opacity: 0.35, letterSpacing: '0.1em' }}>
+              {bassCovers.length} covers · 小红书合集
+            </p>
           </div>
+          {/* 外链箭头 */}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="opacity-25 group-hover:opacity-65 transition-opacity">
+            <path d="M4,10 L16,10 M11,5 L16,10 L11,15" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
 
-          {/* 当前曲目信息 */}
-          {activeCover && (
-            <div className="px-1">
-              <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.25rem', fontWeight: 700, marginBottom: 4 }}>
-                {activeCover.title}
-              </h3>
-              <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.95rem', opacity: 0.55, marginBottom: 6 }}>
-                {activeCover.artist} · {activeCover.duration}
-              </p>
-              <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.95rem', opacity: 0.75, fontStyle: 'italic' }}>
-                " {activeCover.note} "
-              </p>
-            </div>
-          )}
+        {/* 右：曲目列表（3/5） */}
+        <div
+          className="scroll-container flex-1"
+          style={{ borderLeft: '1px solid rgba(255,255,255,0.12)', paddingLeft: 32 }}
+        >
+          <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', opacity: 0.3, letterSpacing: '0.15em', marginBottom: 16 }}>
+            SETLIST
+          </p>
+          {bassCovers.map((cover, i) => (
+            <a
+              key={cover.id}
+              href={cover.url || bassCollectionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-4 py-3 border-b group"
+              style={{ borderColor: 'rgba(255,255,255,0.08)', textDecoration: 'none', color: 'inherit' }}
+            >
+              <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.65rem', opacity: 0.25, minWidth: 22, paddingTop: 3, flexShrink: 0 }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p
+                  className="group-hover:opacity-100 transition-opacity"
+                  style={{ fontFamily: "'Caveat', cursive", fontSize: '1rem', opacity: 0.85, marginBottom: 1 }}
+                >
+                  {cover.title}
+                </p>
+                {cover.note ? (
+                  <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.8rem', opacity: 0.4, fontStyle: 'italic' }}>
+                    {cover.note}
+                  </p>
+                ) : null}
+              </div>
+              {/* 外链小图标 */}
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0 opacity-0 group-hover:opacity-40 transition-opacity" style={{ marginTop: 4 }}>
+                <path d="M2,7 L12,7 M8,3 L12,7 L8,11" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+          ))}
         </div>
       </div>
     </div>
@@ -421,19 +459,43 @@ function BassSubPage({ onBack }) {
 // 主页：三个图标入口
 // ──────────────────────────────────────────────────────────
 const FOGGY_ITEMS = [
-  { id: 'film',  label: '影视',  Icon: ClapperboardIcon },
-  { id: 'music', label: '音乐',  Icon: VinylIcon },
-  { id: 'bass',  label: '弹拨',  Icon: BassIcon },
+  { id: 'film',  label: 'Movie',  Icon: ClapperboardIcon },
+  { id: 'music', label: 'Music',  Icon: VinylIcon },
+  { id: 'bass',  label: 'Bass',   Icon: BassIcon },
 ];
 
-export default function FoggyPage() {
+export default function FoggyPage({ openMusicSub, onMusicSubOpened, resetSignal }) {
   const [sub, setSub] = useState(null); // null | 'film' | 'music' | 'bass'
   const [transitioning, setTransitioning] = useState(false);
+  const { setFoggySubPage } = usePlayer();
+
+  // 当外部触发 openMusicSub 时，直接进入 Music 子页
+  useEffect(() => {
+    if (openMusicSub) {
+      setSub('music');
+      setFoggySubPage('music');
+      onMusicSubOpened && onMusicSubOpened();
+    }
+  }, [openMusicSub]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 点击底部 Foggy 导航按钮时重置回目录
+  useEffect(() => {
+    if (resetSignal === 0) return; // 初始化时不触发
+    setSub(null);
+    setFoggySubPage(null);
+    setTransitioning(false);
+  }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 离开 FoggyPage 时清除子页状态
+  useEffect(() => {
+    return () => setFoggySubPage(null);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enterSub = (id) => {
     setTransitioning(true);
     setTimeout(() => {
       setSub(id);
+      setFoggySubPage(id);
       setTransitioning(false);
     }, 250);
   };
@@ -442,6 +504,7 @@ export default function FoggyPage() {
     setTransitioning(true);
     setTimeout(() => {
       setSub(null);
+      setFoggySubPage(null);
       setTransitioning(false);
     }, 250);
   };
@@ -471,8 +534,10 @@ export default function FoggyPage() {
       </svg>
 
       {sub ? (
-        // 子页面
-        renderSub()
+        // 子页面（relative 定位容器供播放器条 absolute 锚定）
+        <div className="w-full h-full" style={{ position: 'relative' }}>
+          {renderSub()}
+        </div>
       ) : (
         // 主界面：三图标
         <div className="w-full h-full flex flex-col items-center justify-center gap-6">

@@ -4,7 +4,7 @@
  * 主界面：2行 × 3列 的网格矩阵，6 个手绘图标 + 地名
  * 点击进入详情子页（左固定文字 + 右瀑布流照片墙）
  */
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { destinations } from '../data/journey';
 
 // ──────────────────────────────────────────────────────────
@@ -33,17 +33,16 @@ function MuttonIcon() {
 function FujiIcon() {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" fill="none" className="jitter-svg" style={{ filter: 'url(#sketchy)' }}>
-      {/* 山体 */}
-      <path d="M6,60 L24,28 L36,16 L48,28 L66,60 Z"
+      {/* 山体外轮廓：两斜边 + 宽底 */}
+      <path d="M4,60 L32,14 L36,8 L40,14 L68,60 Z"
         stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* 雪顶 */}
-      <path d="M28,34 Q36,16 44,34 Q40,30 36,28 Q32,30 28,34 Z"
-        stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" style={{ opacity: 0.85 }} />
-      {/* 云雾 */}
-      <path d="M10,50 Q18,44 28,48 Q38,52 50,46 Q60,42 66,48"
-        stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" style={{ opacity: 0.4 }} />
-      {/* 山脚 */}
-      <line x1="4" y1="63" x2="68" y2="63" stroke="white" strokeWidth="1.8" strokeLinecap="round" style={{ opacity: 0.5 }} />
+      {/* 雪盖：贴合山体斜边，占上半部，白色填充 */}
+      <path d="M18,34 Q27,10 36,8 Q45,10 54,34 L50,34 L46,36 L42,34 L38,36 L36,34 L34,36 L30,34 L26,36 L22,34 Z"
+        stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="white" />
+      {/* 雪盖底边左侧短锯齿（冰川） */}
+      <path d="M18,34 L14,38 L12,36" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* 雪盖底边右侧短锯齿（冰川） */}
+      <path d="M54,34 L58,38 L60,36" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -67,21 +66,46 @@ function CurryIcon() {
   );
 }
 
-// 枫叶
+// 苏州枫叶（像 🍁）
 function MapleIcon() {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" fill="none" className="jitter-svg" style={{ filter: 'url(#sketchy)' }}>
-      {/* 枫叶路径（简化5瓣） */}
+      {/*
+        5裂枫叶：顶叶朝上，左右各2片侧叶，底部茎
+        用连续路径勾勒整体外轮廓
+      */}
+      {/*
+        5裂枫叶：顶部1片，左右各2片，底部平整
+        从顶叶尖(36,6)顺时针绕一圈
+        叶尖用 L，叶谷（叶片之间的凹陷）也用 L
+      */}
       <path
-        d="M36,10 L40,22 L52,18 L44,28 L58,32 L46,34 L52,46 L38,40 L36,54 L34,40 L20,46 L26,34 L14,32 L28,28 L20,18 L32,22 Z"
+        d="
+          M36,6
+          L32,20 L20,14 L26,26
+          L8,28 L20,34
+          L14,48 L30,42
+          L30,52 L36,52 L42,52
+          L42,42 L58,48
+          L52,34 L64,28
+          L46,26 L52,14
+          L40,20
+          Z
+        "
         stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"
       />
       {/* 茎 */}
-      <line x1="36" y1="54" x2="36" y2="64" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
-      {/* 叶脉 */}
-      <line x1="36" y1="26" x2="36" y2="48" stroke="white" strokeWidth="0.8" style={{ opacity: 0.3 }} />
-      <line x1="26" y1="32" x2="36" y2="38" stroke="white" strokeWidth="0.7" style={{ opacity: 0.25 }} />
-      <line x1="46" y1="32" x2="36" y2="38" stroke="white" strokeWidth="0.7" style={{ opacity: 0.25 }} />
+      <line x1="36" y1="52" x2="36" y2="66" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+      {/* 主叶脉：茎顶→叶顶 */}
+      <line x1="36" y1="52" x2="36" y2="12" stroke="white" strokeWidth="0.9" strokeLinecap="round" style={{ opacity: 0.4 }} />
+      {/* 左上侧脉：中心→左上叶尖 */}
+      <line x1="36" y1="36" x2="20" y2="14" stroke="white" strokeWidth="0.8" strokeLinecap="round" style={{ opacity: 0.32 }} />
+      {/* 右上侧脉：中心→右上叶尖 */}
+      <line x1="36" y1="36" x2="52" y2="14" stroke="white" strokeWidth="0.8" strokeLinecap="round" style={{ opacity: 0.32 }} />
+      {/* 左下侧脉：中心→左下叶尖 */}
+      <line x1="36" y1="42" x2="14" y2="48" stroke="white" strokeWidth="0.7" strokeLinecap="round" style={{ opacity: 0.28 }} />
+      {/* 右下侧脉：中心→右下叶尖 */}
+      <line x1="36" y1="42" x2="58" y2="48" stroke="white" strokeWidth="0.7" strokeLinecap="round" style={{ opacity: 0.28 }} />
     </svg>
   );
 }
@@ -90,17 +114,13 @@ function MapleIcon() {
 function ChickenIcon() {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" fill="none" className="jitter-svg" style={{ filter: 'url(#sketchy)' }}>
-      {/* 鸡腿（手持部分） */}
-      <path d="M42,56 Q50,62 54,60 Q58,58 56,54 Q54,50 46,52 L36,44"
-        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* 肉体 */}
-      <path d="M36,44 Q24,48 18,38 Q12,28 20,20 Q28,12 38,18 Q48,24 44,36 Z"
-        stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* 表皮纹路 */}
-      <path d="M24,30 Q28,24 34,28" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none" style={{ opacity: 0.35 }} />
-      <path d="M30,38 Q36,34 40,38" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none" style={{ opacity: 0.3 }} />
-      {/* 骨头端 */}
-      <circle cx="51" cy="59" r="4" stroke="white" strokeWidth="1.8" fill="none" />
+      {/* 肉体：上方大椭圆 */}
+      <ellipse cx="28" cy="26" rx="20" ry="22"
+        stroke="white" strokeWidth="2.2" fill="none" />
+      {/* 骨头柄：细线斜向右下 */}
+      <line x1="42" y1="42" x2="60" y2="60" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+      {/* 骨头末端小圆 */}
+      <circle cx="62" cy="62" r="4" stroke="white" strokeWidth="2" fill="none" />
     </svg>
   );
 }
@@ -165,40 +185,93 @@ function BackButton({ onClick }) {
 }
 
 // ──────────────────────────────────────────────────────────
-// 照片墙（瀑布流 / 矩阵）
+// 单个 Day 的双列瀑布流
 // ──────────────────────────────────────────────────────────
-function PhotoWall({ photos }) {
-  if (!photos || photos.length === 0) {
-    // 空占位
+function DayMasonry({ day, dayIdx, dayRef }) {
+  const col0 = [];
+  const col1 = [];
+
+  if (day.photos.length === 0) {
+    // 无图时展示占位
     return (
-      <div className="masonry-grid pr-4">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div
-            key={i}
-            className="masonry-item sketch-border flex items-center justify-center"
-            style={{
-              height: i % 3 === 0 ? 180 : i % 3 === 1 ? 130 : 160,
-              background: `rgba(255,255,255,0.03)`,
-            }}
-          >
-            <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.8rem', opacity: 0.2 }}>
-              照片待添加
-            </p>
-          </div>
-        ))}
+      <div
+        ref={dayRef}
+        style={{
+          marginBottom: 24,
+          border: '1px dashed rgba(255,255,255,0.12)',
+          borderRadius: 3,
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.75rem', opacity: 0.2 }}>照片待添加</p>
       </div>
     );
   }
 
+  day.photos.forEach((src, pi) => {
+    if (pi % 2 === 0) col0.push({ src, pi });
+    else col1.push({ src, pi });
+  });
+
+  const renderPhoto = (src, pi, isFirst, ref) => (
+    <div
+      key={`${dayIdx}-${pi}`}
+      ref={isFirst ? ref : null}
+      style={{ marginBottom: 8, borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      <img
+        src={src}
+        alt=""
+        style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+        loading="lazy"
+      />
+    </div>
+  );
+
   return (
-    <div className="masonry-grid pr-4">
-      {photos.map((src, i) => (
-        <div key={i} className="masonry-item sketch-border overflow-hidden">
-          <img
-            src={src}
-            alt={`travel-${i}`}
-            style={{ width: '100%', display: 'block', objectFit: 'cover' }}
-          />
+    <div ref={day.photos.length > 0 ? dayRef : null} style={{ marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 8px', alignItems: 'start' }}>
+        <div>
+          {col0.map(({ src, pi }) => renderPhoto(src, pi, pi === 0, dayRef))}
+        </div>
+        <div style={{ marginTop: 20 }}>
+          {col1.map(({ src, pi }) => renderPhoto(src, pi, false, null))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 全部 days 的瀑布流（带日期标题分隔）
+// ──────────────────────────────────────────────────────────
+function MasonryWall({ days, dayRefs }) {
+  return (
+    <div>
+      {days.map((day, di) => (
+        <div key={di}>
+          {/* 日期标题（锚点，供时间线跳转） */}
+          <div
+            ref={(el) => { if (dayRefs) dayRefs.current[di] = el; }}
+            style={{ marginBottom: 10, paddingTop: di > 0 ? 8 : 0 }}
+          >
+            <span style={{
+              fontFamily: "'Special Elite', monospace",
+              fontSize: '0.58rem',
+              letterSpacing: '0.14em',
+              opacity: 0.35,
+              marginRight: 8,
+            }}>{day.date}</span>
+            <span style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: '0.82rem',
+              opacity: 0.55,
+            }}>{day.label}</span>
+          </div>
+          <DayMasonry day={day} dayIdx={di} dayRef={null} />
         </div>
       ))}
     </div>
@@ -206,55 +279,110 @@ function PhotoWall({ photos }) {
 }
 
 // ──────────────────────────────────────────────────────────
-// 详情页
+// 详情页：左侧时间线 + 右侧双列瀑布流
 // ──────────────────────────────────────────────────────────
 function DestinationDetail({ dest, onBack }) {
+  const [activeDay, setActiveDay] = useState(0);
+  const scrollRef = useRef(null);
+  const dayRefs = useRef([]);
+
+  const scrollToDay = useCallback((idx) => {
+    setActiveDay(idx);
+    const el = dayRefs.current[idx];
+    const container = scrollRef.current;
+    if (el && container) {
+      container.scrollTo({ top: el.offsetTop - 12, behavior: 'smooth' });
+    }
+  }, []);
+
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 80px' }}>
+    <div className="w-full h-full flex flex-col" style={{ padding: '32px 52px 72px' }}>
       <BackButton onClick={onBack} />
 
-      <div className="flex flex-1 gap-12 overflow-hidden">
-        {/* 左 1/3：固定文字 */}
+      <div className="flex flex-1 gap-8 overflow-hidden" style={{ minHeight: 0 }}>
+
+        {/* ── 左侧：地名 + 时间线 ── */}
         <div
-          className="flex-shrink-0 flex flex-col"
-          style={{ width: '30%' }}
+          style={{
+            width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column',
+            overflowY: 'auto', paddingRight: 8,
+          }}
         >
+          {/* 地名 */}
           <h2
-            className="jitter-text mb-1"
-            style={{ fontFamily: "'Caveat', cursive", fontSize: '2.4rem', fontWeight: 700, lineHeight: 1 }}
+            className="jitter-text"
+            style={{ fontFamily: "'Caveat', cursive", fontSize: '2.2rem', fontWeight: 700, lineHeight: 1, marginBottom: 4 }}
           >
             {dest.name}
           </h2>
-          <p
-            className="mb-6"
-            style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.72rem', letterSpacing: '0.15em', opacity: 0.4 }}
-          >
+          <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.62rem', letterSpacing: '0.13em', opacity: 0.35, marginBottom: 20 }}>
             {dest.time}
           </p>
 
-          {/* 分隔线 */}
-          <svg width="100%" height="10" className="mb-5 opacity-25" viewBox="0 0 150 10" preserveAspectRatio="none" fill="none">
-            <path d="M0,5 Q30,2 60,6 Q90,9 120,4 Q140,2 150,5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          {/* 时间线 */}
+          <div style={{ position: 'relative', paddingLeft: 16 }}>
+            {/* 竖线 */}
+            <div style={{
+              position: 'absolute', left: 5, top: 8, bottom: 8,
+              width: 1, background: 'rgba(255,255,255,0.12)',
+            }} />
 
-          <p
-            style={{
-              fontFamily: "'Caveat', cursive",
-              fontSize: '1.0rem',
-              lineHeight: 1.9,
-              whiteSpace: 'pre-wrap',
-              opacity: 0.8,
-              flex: 1,
-              overflow: 'hidden',
-            }}
-          >
-            {dest.intro}
-          </p>
+            {dest.days.map((day, idx) => (
+              <button
+                key={idx}
+                onClick={() => scrollToDay(idx)}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '6px 0', position: 'relative', marginBottom: 4,
+                }}
+              >
+                {/* 圆点 */}
+                <div style={{
+                  position: 'absolute', left: -13, top: '50%', transform: 'translateY(-50%)',
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: activeDay === idx ? 'white' : 'rgba(255,255,255,0.25)',
+                  border: activeDay === idx ? 'none' : '1px solid rgba(255,255,255,0.3)',
+                  transition: 'background 0.2s',
+                }} />
+                <p style={{
+                  fontFamily: "'Special Elite', monospace",
+                  fontSize: '0.6rem', letterSpacing: '0.08em',
+                  opacity: activeDay === idx ? 0.9 : 0.38,
+                  transition: 'opacity 0.2s',
+                  color: 'white', margin: 0,
+                }}>
+                  {day.date}
+                </p>
+                <p style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: '0.82rem',
+                  opacity: activeDay === idx ? 0.85 : 0.45,
+                  transition: 'opacity 0.2s',
+                  color: 'white', margin: 0,
+                }}>
+                  {day.label}
+                </p>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 右 2/3：照片瀑布流 */}
-        <div className="flex-1 scroll-container">
-          <PhotoWall photos={dest.photos} />
+        {/* ── 右侧：双列瀑布流 ── */}
+        <div
+          ref={scrollRef}
+          style={{ flex: 1, overflowY: 'auto', paddingRight: 6 }}
+          onScroll={(e) => {
+            // 根据滚动位置更新 activeDay
+            const containerTop = e.currentTarget.scrollTop;
+            let closest = 0;
+            dayRefs.current.forEach((el, idx) => {
+              if (el && el.offsetTop - 20 <= containerTop) closest = idx;
+            });
+            setActiveDay(closest);
+          }}
+        >
+          <MasonryWall days={dest.days} dayRefs={dayRefs} />
         </div>
       </div>
     </div>
@@ -264,9 +392,16 @@ function DestinationDetail({ dest, onBack }) {
 // ──────────────────────────────────────────────────────────
 // 主界面：2行 × 3列 网格
 // ──────────────────────────────────────────────────────────
-export default function JourneyPage() {
+export default function JourneyPage({ resetSignal }) {
   const [selected, setSelected] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
+
+  // 点击底部 Journey 导航按钮时重置回目录
+  useEffect(() => {
+    if (!resetSignal) return; // 初始化时不触发
+    setSelected(null);
+    setTransitioning(false);
+  }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enterDetail = (dest) => {
     setTransitioning(true);

@@ -1,89 +1,260 @@
 /**
  * 旅行数据
+ * photos 结构：按日期分组 days: [{ date, label, photos: [] }]
  */
 export const destinations = [
   {
     id: 'xinjiang',
     name: '新疆',
-    iconType: 'mutton',       // 羊肉串
-    time: '2023年8月',
-    intro: `第一次去新疆，被那种辽阔彻底震到了。
-
-天山脚下，伊犁河谷，漫山遍野的薰衣草紫到发不出声音。喀纳斯的傍晚，湖面像一块会呼吸的银镜。
-
-烤羊肉串是一定要吃的，炭火的烟熏气混着孜然，吃到第三串就开始理解为什么有人说这辈子必须来一次。
-
-"那种广袤感，不是用眼睛看的，是用胸腔感受的。"`,
-    photos: [],
+    iconType: 'mutton',
+    time: '2024年7月',
+    days: [
+      {
+        date: '2024.7',
+        label: '新疆',
+        photos: [
+          '/journey/xinjiang/微信图片_2026-06-13_161622_251.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161627_116.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161631_092.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161634_918.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161638_117.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161641_329.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161644_461.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161647_841.jpg',
+          '/journey/xinjiang/微信图片_2026-06-13_161701_664.jpg',
+        ],
+      },
+    ],
   },
   {
-    id: 'kanto',
-    name: '关东',
-    iconType: 'fuji',         // 富士山
-    time: '2024年3月',
-    intro: `樱花季去东京，人挤人到几乎后悔，但站在目黑川边上看粉白花瓣落进水里的一刻，什么都值了。
-
-涩谷、新宿、下北泽……每条街都有自己的气质，像是平行世界在同一个城市叠放。
-
-一个人逛书店、喝咖啡、走路，感受到那种"陌生又安全"的异乡感。
-
-"东京教会我：可以孤独，但不必孤单。"`,
-    photos: [],
+    id: 'honshu',
+    name: '本州',
+    iconType: 'fuji',
+    time: '2024年5月',
+    days: [
+      {
+        date: '5.17',
+        label: '奈良',
+        photos: [
+          '/journey/honshu/24.5.17-nara/微信图片_2026-06-13_161752_441.jpg',
+          '/journey/honshu/24.5.17-nara/微信图片_2026-06-13_161757_360.jpg',
+          '/journey/honshu/24.5.17-nara/微信图片_2026-06-13_161801_317.jpg',
+        ],
+      },
+      {
+        date: '5.18',
+        label: '京都',
+        photos: [
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162001_413.jpg',
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162009_548.jpg',
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162015_800.jpg',
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162019_600.jpg',
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162023_628.jpg',
+          '/journey/honshu/24.5.18-kyoto/微信图片_2026-06-13_162242_763.jpg',
+        ],
+      },
+      {
+        date: '5.20',
+        label: '富士山',
+        photos: [
+          '/journey/honshu/24.5.20-fuji/微信图片_2026-06-13_161914_428.jpg',
+          '/journey/honshu/24.5.20-fuji/微信图片_2026-06-13_161919_227.jpg',
+          '/journey/honshu/24.5.20-fuji/微信图片_2026-06-13_161922_587.jpg',
+        ],
+      },
+      {
+        date: '5.21',
+        label: '东京',
+        photos: [
+          '/journey/honshu/24.5.21-tokyo/微信图片_2026-06-13_162110_177.jpg',
+          '/journey/honshu/24.5.21-tokyo/微信图片_2026-06-13_162116_912.jpg',
+          '/journey/honshu/24.5.21-tokyo/微信图片_2026-06-13_162120_229.jpg',
+          '/journey/honshu/24.5.21-tokyo/微信图片_2026-06-13_162138_658.jpg',
+        ],
+      },
+    ],
   },
   {
     id: 'hokkaido',
     name: '北海道',
-    iconType: 'curry',        // 汤咖喱
-    time: '2023年11月',
-    intro: `雪还没下完的初冬，札幌大通公园的银杏黄得不真实。
-
-在狸小路找到一家藏着的汤咖喱小店，辣度选了3，坐在窗边看外面的人裹着大衣走过，锅里热气腾腾地冒烟。
-
-函馆的夜景是真的好看，从山顶往下看灯光，像有人把星星放倒铺在了地上。
-
-"北海道让我意识到，食物是最诚实的旅行记忆。"`,
-    photos: [],
+    iconType: 'curry',
+    time: '2025年1月',
+    days: [
+      {
+        date: '1.19',
+        label: '札幌 · 中岛公园',
+        photos: [
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_1_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_2_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_3_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_4_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_6_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_7_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-zhongdao/dv｜人 喜欢公园和咖啡店_8_殷勤_来自小红书网页版.jpg',
+        ],
+      },
+      {
+        date: '1.19',
+        label: '札幌 · 北海道大学',
+        photos: [
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_1_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_2_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_3_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_4_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_5_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_6_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_7_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_8_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_9_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.19-hokudai/dv ｜北海道大学散步_13_殷勤_来自小红书网页版.jpg',
+        ],
+      },
+      {
+        date: '1.22',
+        label: '美瑛',
+        photos: [
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_1_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_2_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_3_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_4_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_5_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_6_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_7_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_8_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜美瑛碎片_9_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv ｜北海道大学散步_10_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.22-biei/dv｜人 喜欢公园和咖啡店_5_殷勤_来自小红书网页版.jpg',
+        ],
+      },
+      {
+        date: '1.23',
+        label: '小樽',
+        photos: [
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_1_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_2_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_3_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_4_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_5_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_6_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_7_殷勤_来自小红书网页版.jpg',
+          '/journey/hokkaido/1.23-otaru/dv｜小樽回忆录_8_殷勤_来自小红书网页版.jpg',
+        ],
+      },
+    ],
   },
   {
     id: 'suzhou',
     name: '苏州',
-    iconType: 'maple',        // 枫叶
-    time: '2022年10月',
-    intro: `深秋去苏州，一半为了枫叶，一半为了园林。
-
-拙政园的回廊，每拐一个弯都是新的构图。坐在亭子里发呆，感觉古代文人的审美就是被这种山水熏出来的。
-
-平江路的小店逛到腿软，买了一幅苏绣扇面，至今挂在书架旁。
-
-"苏州是一首从来不着急的诗。"`,
-    photos: [],
+    iconType: 'maple',
+    time: '2024年12月',
+    days: [
+      {
+        date: '12.9',
+        label: '虎丘 · 冷香园',
+        photos: [
+          '/journey/suzhou/苏州.Live_1_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_2_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_3_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_4_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_5_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_6_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_7_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_8_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_9_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_10_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_11_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_12_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_13_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_14_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/苏州.Live_17_殷勤_来自小红书网页版.jpg',
+          '/journey/suzhou/诶 突然想起来能发全屏_5_殷勤_来自小红书网页版.jpg',
+        ],
+      },
+    ],
   },
   {
     id: 'jeju',
     name: '济州',
-    iconType: 'chicken',      // 炸鸡
-    time: '2024年5月',
-    intro: `一个人去济州岛，租了辆车绕岛一圈，这是我做过最治愈的事之一。
-
-城山日出峰、牛岛、汉拿山……每一处都比照片好看一倍。
-
-在一家路边小店吃了当地的炸鸡和麦格利，老板不会中文我不会韩语，最后靠手机翻译聊了半小时。
-
-"旅行的意义，有时候就是那一桌说不通话却笑着喝酒的晚饭。"`,
-    photos: [],
+    iconType: 'chicken',
+    time: '2026年1月',
+    days: [
+      {
+        date: '1.28',
+        label: '济州',
+        photos: [
+          '/journey/jeju/1.28/微信图片_2026-06-13_161151_991.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161159_210.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161203_062.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161206_713.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161211_248.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161214_834.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161220_649.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161225_359.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161228_834.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161446_796.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161500_250.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161515_503.jpg',
+          '/journey/jeju/1.28/微信图片_2026-06-13_161520_760.jpg',
+        ],
+      },
+      {
+        date: '1.29',
+        label: '史努比公园',
+        photos: [
+          '/journey/jeju/1.29/微信图片_2026-06-13_161326_384.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161331_679.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161335_315.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161338_747.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161342_196.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161347_797.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161352_875.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161356_448.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161408_079.jpg',
+          '/journey/jeju/1.29/微信图片_2026-06-13_161418_983.jpg',
+        ],
+      },
+    ],
   },
   {
     id: 'qingdao',
     name: '青岛',
-    iconType: 'beer',         // 啤酒
-    time: '2022年7月',
-    intro: `暑假去青岛，本来只是路过，结果多待了三天。
-
-海边的晚风，老城区的红色屋顶，扎啤和海鲜摊，这城市有种松弛的劲儿。
-
-在劈柴院吃烧烤，对面坐着一桌陌生人自来熟地拉我们拼桌，那顿饭好像喝了一箱。
-
-"青岛提醒我：快乐其实很简单，就是一杯冰镇的啤酒和一阵海风。"`,
-    photos: [],
+    iconType: 'beer',
+    time: '2026年4月',
+    days: [
+      {
+        date: '4.25',
+        label: '青岛',
+        photos: [
+          '/journey/qingdao/26.4.25/微信图片_2026-06-13_160802_017.jpg',
+          '/journey/qingdao/26.4.25/微信图片_2026-06-13_160806_061.jpg',
+          '/journey/qingdao/26.4.25/微信图片_2026-06-13_160809_261.jpg',
+          '/journey/qingdao/26.4.25/微信图片_2026-06-13_160812_394.jpg',
+        ],
+      },
+      {
+        date: '4.26',
+        label: '青岛',
+        photos: [
+          '/journey/qingdao/26.4.26/微信图片_2026-06-13_160739_204.jpg',
+          '/journey/qingdao/26.4.26/微信图片_2026-06-13_160742_550.jpg',
+          '/journey/qingdao/26.4.26/微信图片_2026-06-13_160745_995.jpg',
+          '/journey/qingdao/26.4.26/微信图片_2026-06-13_160749_966.jpg',
+          '/journey/qingdao/26.4.26/微信图片_2026-06-13_160754_926.jpg',
+        ],
+      },
+      {
+        date: '4.30',
+        label: '青岛',
+        photos: [
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160629_448.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160656_204.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160701_379.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160709_930.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160714_245.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160722_484.jpg',
+          '/journey/qingdao/26.4.30/微信图片_2026-06-13_160730_499.jpg',
+        ],
+      },
+    ],
   },
 ];

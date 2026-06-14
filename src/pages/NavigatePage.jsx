@@ -68,12 +68,31 @@ function DetailPanel({ item, visible }) {
       </p>
 
       {/* 机构 */}
-      <h2
-        className="jitter-text mb-1"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700, lineHeight: 1.2 }}
-      >
-        {item.school || item.company}
-      </h2>
+      <div className="flex items-baseline gap-3 mb-1">
+        <h2
+          className="jitter-text"
+          style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700, lineHeight: 1.2 }}
+        >
+          {item.school || item.company}
+        </h2>
+        {item.badges?.map((b) => (
+          <span
+            key={b}
+            className="jitter-text sketch-border"
+            style={{
+              fontFamily: "'Special Elite', monospace",
+              fontSize: '0.62rem',
+              letterSpacing: '0.1em',
+              padding: '2px 8px',
+              opacity: 0.6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            {b}
+          </span>
+        ))}
+      </div>
 
       {/* 角色 */}
       <p
