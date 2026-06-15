@@ -17,7 +17,7 @@ export default function BottomNav({ current, onChange }) {
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center pb-5 pt-3"
       style={{
-        background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)',
+        background: 'rgb(0,0,0)',
         gap: isMobile ? '1.6rem' : '2.5rem',
       }}
     >
