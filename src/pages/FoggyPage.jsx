@@ -243,8 +243,14 @@ function MusicSubPage({ onBack }) {
   // 从全局 Context 取播放状态
   const { playingTrack, isPlaying, playSong } = usePlayer();
 
+  // 底部固定遮挡高度：BottomNav ≈ 72px，PlayerBar（有歌时）≈ 64px
+  const bottomOffset = 72 + (playingTrack ? 64 : 0);
+
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: isMobile ? '24px 16px 0' : '40px 60px 0' }}>
+    <div
+      className="w-full h-full flex flex-col"
+      style={{ padding: isMobile ? `24px 16px ${bottomOffset}px` : `40px 60px ${bottomOffset}px` }}
+    >
 
       <BackButton onClick={onBack} />
       <h2
@@ -254,8 +260,11 @@ function MusicSubPage({ onBack }) {
         Music
       </h2>
 
-      {/* 内容区 */}
-      <div className={isMobile ? 'flex flex-col min-h-0 scroll-container' : 'flex gap-10 min-h-0'} style={{ flex: 1, paddingBottom: 16 }}>
+      {/* 内容区：overflow-hidden 约束内部 scroll-container 不超出 */}
+      <div
+        className={isMobile ? 'flex flex-col min-h-0 scroll-container' : 'flex gap-10 overflow-hidden'}
+        style={{ flex: 1, minHeight: 0 }}
+      >
         {/* 专辑列表 */}
         <div className={isMobile ? 'flex flex-col gap-1 mb-3' : 'flex flex-col gap-2 scroll-container'} style={isMobile ? {} : { flex: '2.3', minWidth: 0 }}>
           {albums.map((a, i) => (
