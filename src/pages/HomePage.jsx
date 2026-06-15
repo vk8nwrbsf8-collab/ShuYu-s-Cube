@@ -271,16 +271,15 @@ function SmallCubeBtn({ onClick }) {
 }
 
 // ─────────────────────────────────────────────
-// Agent API
+// Agent API  (Coze.cn 官方 Bot API v3/chat)
 // ─────────────────────────────────────────────
-// 开发环境走 Vite 代理（/coze-api → https://bhydrjmw8y.coze.site）避免 CORS
+// 开发环境走 Vite 代理（/coze-api → https://api.coze.cn）避免 CORS
 // 生产环境走 Cloudflare Worker CORS 代理
-const AGENT_API_URL    = import.meta.env.DEV
-  ? '/coze-api/stream_run'
-  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/stream_run';
-const AGENT_TOKEN      = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjA2YjNiMmZlLTVhZjYtNGFiMy05ODM5LWRmNDZiNTMzODBlNyJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbIjFNcTFLemU5SnV6RWhsMUdwVE1KcWZOb1REdHJPSGxhIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzgxNDUxOTAzLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjUxMjY0ODUzNzM4MjU4NDczIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3NjUxMjc3NjY0NDQ3MTAzMDExIn0.yOKj8zrdXjVZGuEPqBOZl9I6X6spT18aSR-oJYfol2TYSVUjC8iZGcRUHO_1zbTjLp2GzKRv28PH2RWE7mE7Sbk4vRZ8YyH27egSZ5WeLx7eKgH0K8V7MIQ8njYNzE98FJhJkppYLNy0jGrR_J63-qusb7y22BZlQ96BIBIinU6lI2WkuxD3kM8TK239ah3fpNje2NM99Mg4c9uhbbkn06H6AqmIOh3cn3bflqNwUkPNy4RdQ3WmG1vOPrJg-ol3_FnuiSBs_gFD26fKr_lcHUtM9zNcIdUPd5tO_-zdIw_LkJsm0nxrsDXFLcLpqQ9lRMakL0z4l01QGh-YrGA2Ng';
-const AGENT_SESSION_ID = 'T4o2YUXKoaouoMdnnae_4';
-const AGENT_PROJECT_ID = '7651250950921011243';
+const AGENT_API_URL = import.meta.env.DEV
+  ? '/coze-api/v3/chat'
+  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat';
+const AGENT_TOKEN   = 'pat_moxDJ0C3r2MtlFxblz1J5YBkI8YvDFZS6l1eFy5JtSRgpvByiEf0Xz6jU3B0DNWT';
+const AGENT_BOT_ID  = '7651604061602611200';
 
 async function callAgentStreaming(text, onChunk, onDone, onError) {
   try {
@@ -292,48 +291,56 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
         'Accept': 'text/event-stream',
       },
       body: JSON.stringify({
-        content: {
-          query: {
-            prompt: [{ type: 'text', content: { text } }],
-          },
-        },
-        type: 'query',
-        session_id: AGENT_SESSION_ID,
-        project_id: AGENT_PROJECT_ID,
+        bot_id: AGENT_BOT_ID,
+        user_id: 'visitor_' + Math.random().toString(36).slice(2, 10),
+        stream: true,
+        additional_messages: [
+          { role: 'user', content: text, content_type: 'text' },
+        ],
       }),
     });
     if (!res.ok) {
       const errText = await res.text();
-      onError(`请求失败 (${res.status}): ${errText.slice(0, 100)}`);
+      onError(`请求失败 (${res.status}): ${errText.slice(0, 150)}`);
       return;
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder('utf-8');
     let buf = '';
+    // Coze v3/chat SSE 格式：
+    //   event: conversation.message.delta
+    //   data: {"role":"assistant","type":"answer","content":"...", ...}
+    //
+    //   event: conversation.chat.completed
+    //   data: {"status":"completed", ...}
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       buf += dec.decode(value, { stream: true });
-      // SSE 以 \n\n 为块分隔符
       const blocks = buf.split('\n\n');
       buf = blocks.pop() ?? '';
       for (const block of blocks) {
-        // 取出块内所有 data: 行的内容
-        const dataLines = block
-          .split('\n')
-          .filter(ln => ln.startsWith('data:'))
-          .map(ln => ln.slice(5).trim());
-        if (dataLines.length === 0) continue;
-        const raw = dataLines.join('\n');
-        if (!raw || raw === '[DONE]') continue;
+        const lines = block.split('\n');
+        let eventType = '';
+        let dataStr = '';
+        for (const ln of lines) {
+          if (ln.startsWith('event:')) eventType = ln.slice(6).trim();
+          if (ln.startsWith('data:'))  dataStr  = ln.slice(5).trim();
+        }
+        if (!dataStr || dataStr === '[DONE]') continue;
         try {
-          const p = JSON.parse(raw);
-          // answer 块：把文字流式输出
-          if (p.type === 'answer' && p.content?.answer) {
-            onChunk(p.content.answer);
+          const p = JSON.parse(dataStr);
+          // 流式文字块
+          if (eventType === 'conversation.message.delta' && p.type === 'answer' && p.content) {
+            onChunk(p.content);
           }
-          // 最后一个 answer finish=true 或 message_end → 结束
-          if (p.type === 'message_end' || (p.type === 'answer' && p.finish === true)) {
+          // 会话完成
+          if (eventType === 'conversation.chat.completed' || eventType === 'done') {
+            onDone();
+            return;
+          }
+          // 兜底：message completed 且 type=answer 也触发结束
+          if (eventType === 'conversation.message.completed' && p.type === 'answer') {
             onDone();
             return;
           }

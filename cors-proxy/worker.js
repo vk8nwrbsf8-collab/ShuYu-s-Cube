@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker: CORS proxy for Coze AgentSite
+ * Cloudflare Worker: CORS proxy for Coze.cn Official API
  *
  * Deploy commands:
  *   cd cors-proxy
@@ -7,9 +7,9 @@
  *   npx wrangler deploy worker.js --name coze-cors-proxy --compatibility-date 2024-01-01
  *
  * After deploy, copy the worker URL (e.g. https://coze-cors-proxy.xxx.workers.dev)
- * and update AGENT_PROXY_URL in src/pages/HomePage.jsx
+ * and update AGENT_API_URL in src/pages/HomePage.jsx
  */
-const UPSTREAM = 'https://bhydrjmw8y.coze.site';
+const UPSTREAM = 'https://api.coze.cn';
 const ALLOWED_ORIGIN = '*';
 
 export default {

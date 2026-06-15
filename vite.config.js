@@ -13,7 +13,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/netease-api/, ''),
       },
       '/coze-api': {
-        target: 'https://bhydrjmw8y.coze.site',
+        target: 'https://api.coze.cn',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/coze-api/, ''),
       },
