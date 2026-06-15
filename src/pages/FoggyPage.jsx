@@ -151,7 +151,7 @@ function FilmSubPage({ onBack }) {
               {/* 左侧：海报 */}
               <div
                 className="flex-shrink-0"
-                style={{ width: 120, flexShrink: 0, position: 'relative' }}
+                style={{ width: 120, height: '100%', flexShrink: 0, position: 'relative' }}
               >
                 {film.poster ? (
                   <img
