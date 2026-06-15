@@ -11,7 +11,18 @@
  * 正方体中心在容器内: cx=280, cy=240
  * 标签距正方体边缘约 20~40px 的间距
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+
+// 获取窗口尺寸
+function useWindowSize() {
+  const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+  useEffect(() => {
+    const handler = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return size;
+}
 
 // ─────────────────────────────────────────────
 // CSS 关键帧（动态注入避免 Tailwind 冲突）
@@ -370,24 +381,36 @@ function CozeChatPanel({ open, onClose }) {
     );
   };
 
+  // 移动端全屏，桌面端浮动
+  const isMobile = window.innerWidth <= 640;
+  const panelStyle = isMobile ? {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 9998,
+    display: 'flex',
+    flexDirection: 'column',
+    transform: open ? 'translateY(0)' : 'translateY(100%)',
+    opacity: open ? 1 : 0,
+    pointerEvents: open ? 'auto' : 'none',
+    transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1), opacity 0.22s ease',
+  } : {
+    position: 'fixed',
+    bottom: 120,
+    right: 120,
+    width: 340,
+    height: 500,
+    zIndex: 9998,
+    display: 'flex',
+    flexDirection: 'column',
+    transform: open ? 'scale(1) translateY(0)' : 'scale(0.92) translateY(16px)',
+    opacity: open ? 1 : 0,
+    pointerEvents: open ? 'auto' : 'none',
+    transition: 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease',
+    transformOrigin: 'bottom right',
+  };
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: 120,
-        right: 120,
-        width: 340,
-        height: 500,
-        zIndex: 9998,
-        display: 'flex',
-        flexDirection: 'column',
-        // 弹出动画，始终挂载保留历史
-        transform: open ? 'scale(1) translateY(0)' : 'scale(0.92) translateY(16px)',
-        opacity: open ? 1 : 0,
-        pointerEvents: open ? 'auto' : 'none',
-        transition: 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease',
-        transformOrigin: 'bottom right',
-      }}
+    <div style={panelStyle}
     >
       {/* 外框：手绘感多层边框 */}
       <div style={{
@@ -546,6 +569,7 @@ export default function HomePage() {
   const [visibleTags,  setVisibleTags]  = useState([]);   // 当前可见标签索引集合
   const [allShown,     setAllShown]     = useState(false); // 全部标签已出现
   const [chatOpen,     setChatOpen]     = useState(false); // Coze 面板开关
+  const { w: winW, h: winH } = useWindowSize();
 
   // 标签全部弹出完成后标记 allShown
   useEffect(() => {
@@ -583,6 +607,12 @@ export default function HomePage() {
       const CONTAINER_H = 640;
       const CUBE_SIZE   = 200;
 
+      // 移动端缩放比：让容器缩放到刚好不超出屏幕（留出底部导航高度 72px）
+      const availH = winH - 72;
+      const scaleX = winW / CONTAINER_W;
+      const scaleY = availH / CONTAINER_H;
+      const containerScale = Math.min(scaleX, scaleY, 1); // 桌面端不放大，只缩小
+
   return (
     <div className="relative w-full h-full flex flex-col items-center overflow-hidden">
 
@@ -602,12 +632,14 @@ export default function HomePage() {
       {/* ── 主舞台 ── */}
       <div className="flex-1 flex items-center justify-center w-full" style={{ minHeight: 0 }}>
 
-        {/* 定位容器：固定宽高，所有标签相对于它 absolute 定位 */}
+        {/* 定位容器：固定宽高，在小屏幕上整体缩放 */}
         <div style={{
           position: 'relative',
           width: CONTAINER_W,
           height: CONTAINER_H,
           flexShrink: 0,
+          transform: `scale(${containerScale})`,
+          transformOrigin: 'center center',
         }}>
 
           {/* 正方体：居中偏下15px */}
@@ -647,8 +679,8 @@ export default function HomePage() {
       <div
         style={{
           position: 'fixed',
-          bottom: 72,
-          right: 68,
+          bottom: winW <= 640 ? 80 : 72,
+          right: winW <= 640 ? 20 : 68,
           zIndex: 9999,
           cursor: 'pointer',
         }}

@@ -11,15 +11,20 @@ export default function BottomNav({ current, onChange }) {
     { id: 'Journey',  label: 'Journey' },
   ];
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-10 pb-6 pt-4"
-      style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)' }}
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center pb-5 pt-3"
+      style={{
+        background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)',
+        gap: isMobile ? '1.6rem' : '2.5rem',
+      }}
     >
       {/* 装饰横线 */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 opacity-20"
-        style={{ width: '260px', height: '1px', background: '#FFF' }}
+        style={{ width: isMobile ? '200px' : '260px', height: '1px', background: '#FFF' }}
       />
 
       {navItems.map((item) => {
@@ -32,7 +37,9 @@ export default function BottomNav({ current, onChange }) {
               ${isActive ? 'active jitter-text' : 'opacity-55 hover:opacity-90'}`}
             style={{
               fontFamily: "'Caveat', cursive",
-              fontSize: isActive ? '1.4rem' : '1.1rem',
+              fontSize: isMobile
+                ? (isActive ? '1.15rem' : '0.92rem')
+                : (isActive ? '1.4rem' : '1.1rem'),
               fontWeight: isActive ? 700 : 400,
               letterSpacing: '0.06em',
             }}

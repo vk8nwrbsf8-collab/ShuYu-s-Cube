@@ -427,3 +427,21 @@ html, body, #root {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ==============================
+   移动端响应式
+   ============================== */
+@media (max-width: 640px) {
+  /* 防止 iOS 自动放大输入框 */
+  input, textarea {
+    font-size: 16px !important;
+  }
+  /* BottomNav 缩小间距 */
+  .mobile-nav-gap {
+    gap: 1.5rem !important;
+  }
+  /* 滚动容器在移动端启用弹性滚动 */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}

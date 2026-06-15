@@ -7,6 +7,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { destinations } from '../data/journey';
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(window.innerWidth <= 640);
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth <= 640);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return mobile;
+}
+
 // 处理 public 目录下的静态资源路径（兼容 GitHub Pages 子路径部署）
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
@@ -297,6 +307,7 @@ function MasonryWall({ days, dayRefs }) {
 function DestinationDetail({ dest, onBack }) {
   const [activeDay, setActiveDay] = useState(0);
   const scrollRef = useRef(null);
+  const isMobile = useIsMobile();
   const dayRefs = useRef([]);
 
   const scrollToDay = useCallback((idx) => {
@@ -309,96 +320,155 @@ function DestinationDetail({ dest, onBack }) {
   }, []);
 
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '32px 52px 72px' }}>
+    <div className="w-full h-full flex flex-col" style={{ padding: isMobile ? '20px 16px 72px' : '32px 52px 72px' }}>
       <BackButton onClick={onBack} />
 
-      <div className="flex flex-1 gap-8 overflow-hidden" style={{ minHeight: 0 }}>
-
-        {/* ── 左侧：地名 + 时间线 ── */}
-        <div
-          style={{
-            width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column',
-            overflowY: 'auto', paddingRight: 8,
-          }}
-        >
+      {isMobile ? (
+        /* ── 移动端：地名 + 横向日期选择器 + 下方瀑布流 ── */
+        <div className="flex flex-col flex-1 overflow-hidden" style={{ minHeight: 0 }}>
           {/* 地名 */}
-          <h2
-            className="jitter-text"
-            style={{ fontFamily: "'Caveat', cursive", fontSize: '2.2rem', fontWeight: 700, lineHeight: 1, marginBottom: 4 }}
-          >
-            {dest.name}
-          </h2>
-          <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.62rem', letterSpacing: '0.13em', opacity: 0.35, marginBottom: 20 }}>
-            {dest.time}
-          </p>
+          <div style={{ marginBottom: 10 }}>
+            <h2
+              className="jitter-text"
+              style={{ fontFamily: "'Caveat', cursive", fontSize: '1.8rem', fontWeight: 700, lineHeight: 1, marginBottom: 2 }}
+            >
+              {dest.name}
+            </h2>
+            <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.58rem', letterSpacing: '0.1em', opacity: 0.35 }}>
+              {dest.time}
+            </p>
+          </div>
 
-          {/* 时间线 */}
-          <div style={{ position: 'relative', paddingLeft: 16 }}>
-            {/* 竖线 */}
-            <div style={{
-              position: 'absolute', left: 5, top: 8, bottom: 8,
-              width: 1, background: 'rgba(255,255,255,0.12)',
-            }} />
-
+          {/* 横向日期 Tab */}
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, flexShrink: 0 }}>
             {dest.days.map((day, idx) => (
               <button
                 key={idx}
                 onClick={() => scrollToDay(idx)}
                 style={{
-                  display: 'block', width: '100%', textAlign: 'left',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '6px 0', position: 'relative', marginBottom: 4,
+                  flexShrink: 0,
+                  background: activeDay === idx ? 'rgba(255,255,255,0.12)' : 'transparent',
+                  border: `1px solid ${activeDay === idx ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)'}`,
+                  borderRadius: 4,
+                  padding: '5px 10px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  transition: 'all 0.2s',
                 }}
               >
-                {/* 圆点 */}
-                <div style={{
-                  position: 'absolute', left: -13, top: '50%', transform: 'translateY(-50%)',
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: activeDay === idx ? 'white' : 'rgba(255,255,255,0.25)',
-                  border: activeDay === idx ? 'none' : '1px solid rgba(255,255,255,0.3)',
-                  transition: 'background 0.2s',
-                }} />
-                <p style={{
-                  fontFamily: "'Special Elite', monospace",
-                  fontSize: '0.6rem', letterSpacing: '0.08em',
-                  opacity: activeDay === idx ? 0.9 : 0.38,
-                  transition: 'opacity 0.2s',
-                  color: 'white', margin: 0,
-                }}>
-                  {day.date}
-                </p>
-                <p style={{
-                  fontFamily: "'Caveat', cursive",
-                  fontSize: '0.82rem',
-                  opacity: activeDay === idx ? 0.85 : 0.45,
-                  transition: 'opacity 0.2s',
-                  color: 'white', margin: 0,
-                }}>
-                  {day.label}
+                <p style={{ fontFamily: "'Caveat', cursive", fontSize: '0.82rem', opacity: activeDay === idx ? 0.95 : 0.5, margin: 0 }}>
+                  {day.label || day.date}
                 </p>
               </button>
             ))}
           </div>
-        </div>
 
-        {/* ── 右侧：双列瀑布流 ── */}
-        <div
-          ref={scrollRef}
-          className="scroll-container"
-          style={{ flex: 1, paddingRight: 6 }}
-          onScroll={(e) => {
-            // 根据滚动位置更新 activeDay
-            const containerTop = e.currentTarget.scrollTop;
-            let closest = 0;
-            dayRefs.current.forEach((el, idx) => {
-              if (el && el.offsetTop - 20 <= containerTop) closest = idx;
-            });
-            setActiveDay(closest);
-          }}
-        >
-          <MasonryWall days={dest.days} dayRefs={dayRefs} />
+          {/* 瀑布流 */}
+          <div
+            ref={scrollRef}
+            className="scroll-container"
+            style={{ flex: 1, paddingRight: 4, marginTop: 8 }}
+            onScroll={(e) => {
+              const containerTop = e.currentTarget.scrollTop;
+              let closest = 0;
+              dayRefs.current.forEach((el, idx) => {
+                if (el && el.offsetTop - 20 <= containerTop) closest = idx;
+              });
+              setActiveDay(closest);
+            }}
+          >
+            <MasonryWall days={dest.days} dayRefs={dayRefs} />
+          </div>
         </div>
-      </div>
+      ) : (
+        /* ── 桌面端：左侧时间线 + 右侧双列瀑布流 ── */
+        <div className="flex flex-1 gap-8 overflow-hidden" style={{ minHeight: 0 }}>
+
+          {/* 左侧：地名 + 时间线 */}
+          <div
+            style={{
+              width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column',
+              overflowY: 'auto', paddingRight: 8,
+            }}
+          >
+            {/* 地名 */}
+            <h2
+              className="jitter-text"
+              style={{ fontFamily: "'Caveat', cursive", fontSize: '2.2rem', fontWeight: 700, lineHeight: 1, marginBottom: 4 }}
+            >
+              {dest.name}
+            </h2>
+            <p style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.62rem', letterSpacing: '0.13em', opacity: 0.35, marginBottom: 20 }}>
+              {dest.time}
+            </p>
+
+            {/* 时间线 */}
+            <div style={{ position: 'relative', paddingLeft: 16 }}>
+              {/* 竖线 */}
+              <div style={{
+                position: 'absolute', left: 5, top: 8, bottom: 8,
+                width: 1, background: 'rgba(255,255,255,0.12)',
+              }} />
+
+              {dest.days.map((day, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => scrollToDay(idx)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '6px 0', position: 'relative', marginBottom: 4,
+                  }}
+                >
+                  {/* 圆点 */}
+                  <div style={{
+                    position: 'absolute', left: -13, top: '50%', transform: 'translateY(-50%)',
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: activeDay === idx ? 'white' : 'rgba(255,255,255,0.25)',
+                    border: activeDay === idx ? 'none' : '1px solid rgba(255,255,255,0.3)',
+                    transition: 'background 0.2s',
+                  }} />
+                  <p style={{
+                    fontFamily: "'Special Elite', monospace",
+                    fontSize: '0.6rem', letterSpacing: '0.08em',
+                    opacity: activeDay === idx ? 0.9 : 0.38,
+                    transition: 'opacity 0.2s',
+                    color: 'white', margin: 0,
+                  }}>
+                    {day.date}
+                  </p>
+                  <p style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: '0.82rem',
+                    opacity: activeDay === idx ? 0.85 : 0.45,
+                    transition: 'opacity 0.2s',
+                    color: 'white', margin: 0,
+                  }}>
+                    {day.label}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 右侧：双列瀑布流 */}
+          <div
+            ref={scrollRef}
+            className="scroll-container"
+            style={{ flex: 1, paddingRight: 6 }}
+            onScroll={(e) => {
+              const containerTop = e.currentTarget.scrollTop;
+              let closest = 0;
+              dayRefs.current.forEach((el, idx) => {
+                if (el && el.offsetTop - 20 <= containerTop) closest = idx;
+              });
+              setActiveDay(closest);
+            }}
+          >
+            <MasonryWall days={dest.days} dayRefs={dayRefs} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -409,6 +479,7 @@ function DestinationDetail({ dest, onBack }) {
 export default function JourneyPage({ resetSignal }) {
   const [selected, setSelected] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
+  const isMobile = useIsMobile();
 
   // 点击底部 Journey 导航按钮时重置回目录
   useEffect(() => {
@@ -453,22 +524,21 @@ export default function JourneyPage({ resetSignal }) {
         <DestinationDetail dest={selected} onBack={exitDetail} />
       ) : (
         // 主界面
-        <div className="w-full h-full flex flex-col items-center justify-center" style={{ padding: '40px 80px 80px' }}>
+        <div className="w-full h-full flex flex-col items-center justify-center" style={{ padding: isMobile ? '24px 20px 80px' : '40px 80px 80px' }}>
           <p
-            className="jitter-text mb-10"
+            className="jitter-text mb-6"
             style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.72rem', letterSpacing: '0.22em', opacity: 0.3 }}
           >
             JOURNEY  ·  旅行碎片
           </p>
 
-          {/* 2 × 3 网格 */}
+          {/* 网格：移动端 2 × 3，桌面端 3 × 2 */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gridTemplateRows: 'repeat(2, 1fr)',
-              gap: '48px 64px',
-              maxWidth: 640,
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gap: isMobile ? '32px 28px' : '48px 64px',
+              maxWidth: isMobile ? 320 : 640,
               width: '100%',
             }}
           >

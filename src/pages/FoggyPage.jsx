@@ -15,6 +15,16 @@ import { films, albums, bassCovers, bassCollectionUrl } from '../data/hobbies';
 // 处理 public 目录下的静态资源路径（兼容 GitHub Pages 子路径部署）
 const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(window.innerWidth <= 640);
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth <= 640);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return mobile;
+}
+
 // ──────────────────────────────────────────────────────────
 // SVG 图标：场记板
 // ──────────────────────────────────────────────────────────
@@ -134,18 +144,19 @@ function BackButton({ onClick }) {
 // 子页：影视
 // ──────────────────────────────────────────────────────────
 function FilmSubPage({ onBack }) {
+  const isMobile = useIsMobile();
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 80px' }}>
+    <div className="w-full h-full flex flex-col" style={{ padding: isMobile ? '24px 16px 80px' : '40px 60px 80px' }}>
       <BackButton onClick={onBack} />
       <h2
-        className="jitter-text mb-8"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
+        className="jitter-text mb-6"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: 700 }}
       >
         Movie
       </h2>
 
       <div className="scroll-container flex-1">
-        <div className="grid grid-cols-2 gap-5 pr-4">
+        <div className={isMobile ? 'flex flex-col gap-3 pr-2' : 'grid grid-cols-2 gap-5 pr-4'}>
           {films.map((film) => (
             <div key={film.id} className="film-card flex gap-0 overflow-hidden" style={{ height: 180 }}>
               {/* 左侧：海报 */}
@@ -227,25 +238,26 @@ function FilmSubPage({ onBack }) {
 function MusicSubPage({ onBack }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const album = albums[activeIdx];
+  const isMobile = useIsMobile();
 
   // 从全局 Context 取播放状态
   const { playingTrack, isPlaying, playSong } = usePlayer();
 
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 0' }}>
+    <div className="w-full h-full flex flex-col" style={{ padding: isMobile ? '24px 16px 0' : '40px 60px 0' }}>
 
       <BackButton onClick={onBack} />
       <h2
-        className="jitter-text mb-6"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
+        className="jitter-text mb-4"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: 700 }}
       >
         Music
       </h2>
 
-      {/* 内容区：底部留 BottomNav + PlayerBar 高度 */}
-      <div className="flex gap-10 min-h-0" style={{ flex: 1, paddingBottom: playingTrack ? 16 : 16 }}>
-        {/* 左：专辑列表（约占 2.3 份） */}
-        <div className="flex flex-col gap-2 scroll-container" style={{ flex: '2.3', minWidth: 0 }}>
+      {/* 内容区 */}
+      <div className={isMobile ? 'flex flex-col min-h-0 scroll-container' : 'flex gap-10 min-h-0'} style={{ flex: 1, paddingBottom: 16 }}>
+        {/* 专辑列表 */}
+        <div className={isMobile ? 'flex flex-col gap-1 mb-3' : 'flex flex-col gap-2 scroll-container'} style={isMobile ? {} : { flex: '2.3', minWidth: 0 }}>
           {albums.map((a, i) => (
             <button
               key={a.id}
@@ -371,24 +383,25 @@ function MusicSubPage({ onBack }) {
 // 子页：贝斯
 // ──────────────────────────────────────────────────────────
 function BassSubPage({ onBack }) {
+  const isMobile = useIsMobile();
   return (
-    <div className="w-full h-full flex flex-col" style={{ padding: '40px 60px 80px' }}>
+    <div className="w-full h-full flex flex-col" style={{ padding: isMobile ? '24px 16px 80px' : '40px 60px 80px' }}>
       <BackButton onClick={onBack} />
       <h2
-        className="jitter-text mb-8"
-        style={{ fontFamily: "'Caveat', cursive", fontSize: '2rem', fontWeight: 700 }}
+        className="jitter-text mb-6"
+        style={{ fontFamily: "'Caveat', cursive", fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: 700 }}
       >
         Bass Cover
       </h2>
 
-      <div className="flex flex-1 gap-8 overflow-hidden">
-        {/* 左：小红书合集入口（无边框，铺满整个左侧） */}
+      <div className={isMobile ? 'flex flex-col flex-1 overflow-hidden gap-5' : 'flex flex-1 gap-8 overflow-hidden'}>
+        {/* 小红书合集入口 */}
         <a
           href={bassCollectionUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-shrink-0 flex flex-col items-center justify-center gap-6 group cursor-pointer"
-          style={{ width: '38%', textDecoration: 'none', color: 'inherit' }}
+          className={isMobile ? 'flex flex-row items-center gap-4 group cursor-pointer' : 'flex-shrink-0 flex flex-col items-center justify-center gap-6 group cursor-pointer'}
+          style={{ width: isMobile ? '100%' : '38%', textDecoration: 'none', color: 'inherit' }}
         >
           {/* 贝斯手绘图标 */}
           <svg width="72" height="72" viewBox="0 0 90 90" fill="none" className="jitter-svg group-hover:opacity-100 transition-opacity" style={{ opacity: 0.65, filter: 'url(#sketchy)' }}>
@@ -476,6 +489,7 @@ export default function FoggyPage({ openMusicSub, onMusicSubOpened, resetSignal 
   const [sub, setSub] = useState(null); // null | 'film' | 'music' | 'bass'
   const [transitioning, setTransitioning] = useState(false);
   const { setFoggySubPage } = usePlayer();
+  const isMobile = useIsMobile();
 
   // 当外部触发 openMusicSub 时，直接进入 Music 子页
   useEffect(() => {
@@ -556,7 +570,7 @@ export default function FoggyPage({ openMusicSub, onMusicSubOpened, resetSignal 
             FOGGY  ·  个人爱好
           </p>
 
-          <div className="flex items-end justify-center gap-20">
+          <div className={isMobile ? 'flex items-end justify-center gap-10' : 'flex items-end justify-center gap-20'}>
             {FOGGY_ITEMS.map(({ id, label, Icon }) => (
               <div
                 key={id}

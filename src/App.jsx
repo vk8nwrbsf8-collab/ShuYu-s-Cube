@@ -122,23 +122,23 @@ function GlobalPlayerBar() {
   // 只在 Music 子页且有歌曲播放时才显示
   if (!playingTrack || foggySubPage !== 'music') return null;
 
-  // BottomNav 高度约 72px（pb-6=24px + pt-4=16px + 文字~20px + 下划线）
-  // 播放器条紧贴在 BottomNav 上方
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+  // BottomNav 高度约 64px
   return (
     <div
       style={{
         position: 'fixed',
-        bottom: 72,
+        bottom: isMobile ? 60 : 72,
         left: 0,
         right: 0,
-        height: 64,
+        height: isMobile ? 56 : 64,
         background: 'rgba(8,8,8,0.96)',
         borderTop: '1px solid rgba(255,255,255,0.07)',
         backdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 24px',
-        gap: 14,
+        padding: isMobile ? '0 12px' : '0 24px',
+        gap: isMobile ? 8 : 14,
         zIndex: 45,
       }}
     >
@@ -158,23 +158,25 @@ function GlobalPlayerBar() {
         </p>
       </div>
 
-      {/* 进度 + 时间 */}
-      <div style={{ flex: 2, display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-        <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.58rem', opacity: 0.38, flexShrink: 0 }}>{fmtTime(currentTime)}</span>
-        <div
-          style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 1, cursor: 'pointer' }}
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            seekTo((e.clientX - rect.left) / rect.width);
-          }}
-        >
-          <div style={{ width: `${progress * 100}%`, height: '100%', background: 'rgba(255,255,255,0.65)', borderRadius: 1 }} />
+      {/* 进度 + 时间（移动端隐藏） */}
+      {!isMobile && (
+        <div style={{ flex: 2, display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.58rem', opacity: 0.38, flexShrink: 0 }}>{fmtTime(currentTime)}</span>
+          <div
+            style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 1, cursor: 'pointer' }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              seekTo((e.clientX - rect.left) / rect.width);
+            }}
+          >
+            <div style={{ width: `${progress * 100}%`, height: '100%', background: 'rgba(255,255,255,0.65)', borderRadius: 1 }} />
+          </div>
+          <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.58rem', opacity: 0.38, flexShrink: 0 }}>{fmtTime(duration)}</span>
         </div>
-        <span style={{ fontFamily: "'Special Elite', monospace", fontSize: '0.58rem', opacity: 0.38, flexShrink: 0 }}>{fmtTime(duration)}</span>
-      </div>
+      )}
 
       {/* 控制按钮 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14, flexShrink: 0 }}>
         <button onClick={playPrev} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: 0.45, padding: 3 }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <polygon points="14,2 14,14 6,8" fill="white" />
@@ -212,24 +214,26 @@ function MiniPlayer({ onNavigateToMusic }) {
   // 有播放时就显示（任何页面）
   if (!playingTrack) return null;
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+
   return (
     <div
       style={{
         position: 'fixed',
-        top: 20,
-        right: 20,
+        top: isMobile ? 12 : 20,
+        right: isMobile ? 12 : 20,
         zIndex: 50,
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 8,
         background: 'rgba(10,10,10,0.92)',
         border: '1px solid rgba(255,255,255,0.1)',
         borderRadius: 8,
-        padding: '8px 12px 8px 8px',
+        padding: isMobile ? '6px 10px 6px 6px' : '8px 12px 8px 8px',
         backdropFilter: 'blur(20px)',
         boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
         cursor: 'default',
-        maxWidth: 240,
+        maxWidth: isMobile ? 180 : 240,
       }}
     >
       {/* 点击封面跳到 Music 子页 */}
