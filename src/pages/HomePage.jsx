@@ -278,7 +278,7 @@ function SmallCubeBtn({ onClick }) {
 const AGENT_API_URL = import.meta.env.DEV
   ? '/coze-api/v3/chat'
   : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat';
-const AGENT_TOKEN   = 'pat_moxDJ0C3r2MtlFxblz1J5YBkI8YvDFZS6l1eFy5JtSRgpvByiEf0Xz6jU3B0DNWT';
+const AGENT_TOKEN   = 'pat_1E98JXdF58Uqrvgd40A5bn6ob8y3lIB2mvP7H9QOAw6yERD5RK02j8D25Vp7QOth';
 const AGENT_BOT_ID  = '7651604061602611200';
 
 async function callAgentStreaming(text, onChunk, onDone, onError) {
