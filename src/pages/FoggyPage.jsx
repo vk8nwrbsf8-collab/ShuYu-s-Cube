@@ -272,7 +272,10 @@ function MusicSubPage({ onBack }) {
         style={{ flex: 1, minHeight: 0 }}
       >
         {/* 专辑列表 */}
-        <div className={isMobile ? 'flex flex-col gap-1 mb-3' : 'flex flex-col gap-2 scroll-container'} style={isMobile ? {} : { flex: '2.3', minWidth: 0 }}>
+        <div
+          className={isMobile ? 'flex flex-col gap-1 mb-3' : 'flex flex-col gap-2 scroll-container'}
+          style={isMobile ? {} : { flex: '2.3', minWidth: 0, minHeight: 0 }}
+        >
           {albums.map((a, i) => (
             <button
               key={a.id}
@@ -325,7 +328,7 @@ function MusicSubPage({ onBack }) {
         <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0, alignSelf: 'stretch' }} />
 
         {/* 右：曲目列表 */}
-        <div className="flex flex-col" style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex flex-col" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           {/* 专辑信息头 */}
           <div className="flex items-center gap-4 mb-5">
             <div style={{ width: 48, height: 48, borderRadius: 3, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.15)' }}>
@@ -343,7 +346,7 @@ function MusicSubPage({ onBack }) {
           </div>
 
           {/* 曲目列表 */}
-          <div className="scroll-container flex-1">
+          <div className="scroll-container flex-1" style={{ minHeight: 0 }}>
             <div className="flex flex-col">
               {(album.tracks || []).map((track, ti) => {
                 const isActive = playingTrack?.id === track.id;
