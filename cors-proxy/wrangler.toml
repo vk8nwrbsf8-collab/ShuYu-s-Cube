@@ -1,3 +1,7 @@
 name = "coze-cors-proxy"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+
+[vars]
+COZE_BOT_ID = "7651604061602611200"
+# ALLOWED_ORIGIN = "https://your-site.example"

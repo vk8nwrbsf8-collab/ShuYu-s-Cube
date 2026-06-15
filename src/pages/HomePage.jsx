@@ -273,26 +273,39 @@ function SmallCubeBtn({ onClick }) {
 // ─────────────────────────────────────────────
 // Agent API  (Coze.cn 官方 Bot API v3/chat)
 // ─────────────────────────────────────────────
-// 开发环境走 Vite 代理（/coze-api → https://api.coze.cn）避免 CORS
-// 生产环境走 Cloudflare Worker CORS 代理
-const AGENT_API_URL = import.meta.env.DEV
+// 开发环境走 Vite 代理（/coze-api -> https://api.coze.cn）避免 CORS
+// 生产环境走 Cloudflare Worker，由服务端代理注入 Coze PAT
+const DEFAULT_AGENT_BOT_ID = '7651604061602611200';
+const AGENT_API_URL = import.meta.env.VITE_COZE_API_URL || (import.meta.env.DEV
   ? '/coze-api/v3/chat'
-  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat';
-const AGENT_TOKEN   = 'pat_1E98JXdF58Uqrvgd40A5bn6ob8y3lIB2mvP7H9QOAw6yERD5RK02j8D25Vp7QOth';
-const AGENT_BOT_ID  = '7651604061602611200';
+  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat');
+const AGENT_BOT_ID = import.meta.env.VITE_COZE_BOT_ID || DEFAULT_AGENT_BOT_ID;
+const AGENT_USER_ID_KEY = 'shuyu_cube_agent_user_id';
+
+function getAgentUserId() {
+  if (typeof window === 'undefined') return 'visitor_server';
+  try {
+    const existing = window.localStorage.getItem(AGENT_USER_ID_KEY);
+    if (existing) return existing;
+    const id = `visitor_${window.crypto?.randomUUID?.() || Math.random().toString(36).slice(2, 12)}`;
+    window.localStorage.setItem(AGENT_USER_ID_KEY, id);
+    return id;
+  } catch {
+    return 'visitor_' + Math.random().toString(36).slice(2, 10);
+  }
+}
 
 async function callAgentStreaming(text, onChunk, onDone, onError) {
   try {
     const res = await fetch(AGENT_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${AGENT_TOKEN}`,
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
       },
       body: JSON.stringify({
         bot_id: AGENT_BOT_ID,
-        user_id: 'visitor_' + Math.random().toString(36).slice(2, 10),
+        user_id: getAgentUserId(),
         stream: true,
         additional_messages: [
           { role: 'user', content: text, content_type: 'text' },
@@ -402,15 +415,18 @@ function CozeChatPanel({ open, onClose }) {
     );
   };
 
-  // 移动端全屏，桌面端浮动
+  // 移动端留边，桌面端浮动
   const isMobile = window.innerWidth <= 640;
   const panelStyle = isMobile ? {
     position: 'fixed',
-    inset: 0,
+    top: 72,
+    right: 26,
+    bottom: 88,
+    left: 26,
     zIndex: 9998,
     display: 'flex',
     flexDirection: 'column',
-    transform: open ? 'translateY(0)' : 'translateY(100%)',
+    transform: open ? 'translateY(0)' : 'translateY(18px)',
     opacity: open ? 1 : 0,
     pointerEvents: open ? 'auto' : 'none',
     transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1), opacity 0.22s ease',
@@ -418,7 +434,7 @@ function CozeChatPanel({ open, onClose }) {
     position: 'fixed',
     bottom: 120,
     right: 120,
-    width: 340,
+    width: 300,
     height: 500,
     zIndex: 9998,
     display: 'flex',
@@ -452,42 +468,41 @@ function CozeChatPanel({ open, onClose }) {
           transform: 'rotate(-0.3deg)',
         }} />
 
-        {/* 顶栏 */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 14px 8px',
-          borderBottom: '1px solid rgba(255,255,255,0.12)',
-          flexShrink: 0,
-        }}>
-          <span style={{ fontFamily: FONT, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.04em' }}>
-            ASK SHUYU ·
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-              cursor: 'pointer', fontFamily: FONT, fontSize: '1.2rem', lineHeight: 1,
-              padding: '0 2px',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={e => e.target.style.color = '#fff'}
-            onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.5)'}
-          >✕</button>
-        </div>
+        <button
+          onClick={onClose}
+          aria-label="关闭对话"
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 2,
+            background: 'none',
+            border: 'none',
+            color: 'rgba(255,255,255,0.45)',
+            cursor: 'pointer',
+            fontFamily: FONT,
+            fontSize: '1.05rem',
+            lineHeight: 1,
+            padding: '2px 4px',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => e.target.style.color = '#fff'}
+          onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.45)'}
+        >✕</button>
 
         {/* 消息列表 */}
         <div
           ref={scrollRef}
           style={{
-            flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex',
-            flexDirection: 'column', gap: 10,
+            flex: 1, overflowY: 'auto', padding: '42px 12px 12px', display: 'flex',
+            flexDirection: 'column', gap: 8,
             scrollbarWidth: 'thin',
             scrollbarColor: 'rgba(255,255,255,0.2) transparent',
           }}
         >
           {messages.length === 0 && (
             <div style={{
-              fontFamily: FONT, fontSize: '0.95rem', color: 'rgba(255,255,255,0.3)',
+              fontFamily: FONT, fontSize: '0.84rem', color: 'rgba(255,255,255,0.3)',
               textAlign: 'center', marginTop: 40, lineHeight: 1.8,
             }}>
               嗨，有什么想问我的？
@@ -501,9 +516,9 @@ function CozeChatPanel({ open, onClose }) {
               <div style={{
                 maxWidth: '82%',
                 fontFamily: FONT,
-                fontSize: '0.98rem',
-                lineHeight: 1.65,
-                padding: '7px 12px',
+                fontSize: '0.88rem',
+                lineHeight: 1.58,
+                padding: '6px 10px',
                 border: '1.5px solid rgba(255,255,255,0.75)',
                 borderRadius: 3,
                 background: msg.role === 'user' ? 'rgba(255,255,255,0.07)' : '#000',
@@ -544,7 +559,7 @@ function CozeChatPanel({ open, onClose }) {
           onSubmit={handleSubmit}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            padding: '8px 12px 10px',
+            padding: '7px 10px 9px',
             borderTop: '1px solid rgba(255,255,255,0.12)',
             flexShrink: 0,
           }}
@@ -559,7 +574,7 @@ function CozeChatPanel({ open, onClose }) {
             maxLength={300}
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: '#fff', fontFamily: FONT, fontSize: '1rem',
+              color: '#fff', fontFamily: FONT, fontSize: '0.9rem',
               caretColor: 'rgba(255,255,255,0.8)',
             }}
           />
@@ -569,7 +584,7 @@ function CozeChatPanel({ open, onClose }) {
             style={{
               background: 'none', border: 'none', cursor: isStreaming || !inputValue.trim() ? 'default' : 'pointer',
               color: isStreaming || !inputValue.trim() ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.85)',
-              fontFamily: FONT, fontSize: '1.4rem', lineHeight: 1,
+              fontFamily: FONT, fontSize: '1.15rem', lineHeight: 1,
               transition: 'color 0.15s',
               padding: '0 2px',
               flexShrink: 0,
