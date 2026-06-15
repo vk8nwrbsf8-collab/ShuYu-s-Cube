@@ -273,10 +273,14 @@ function SmallCubeBtn({ onClick }) {
 // ─────────────────────────────────────────────
 // Agent API
 // ─────────────────────────────────────────────
-const AGENT_API_URL = 'https://bhydrjmw8y.coze.site/stream_run';
-const AGENT_TOKEN   = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjA2YjNiMmZlLTVhZjYtNGFiMy05ODM5LWRmNDZiNTMzODBlNyJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbIjFNcTFLemU5SnV6RWhsMUdwVE1KcWZOb1REdHJPSGxhIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzgxNDUxOTAzLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjUxMjY0ODUzNzM4MjU4NDczIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3NjUxMjc3NjY0NDQ3MTAzMDExIn0.yOKj8zrdXjVZGuEPqBOZl9I6X6spT18aSR-oJYfol2TYSVUjC8iZGcRUHO_1zbTjLp2GzKRv28PH2RWE7mE7Sbk4vRZ8YyH27egSZ5WeLx7eKgH0K8V7MIQ8njYNzE98FJhJkppYLNy0jGrR_J63-qusb7y22BZlQ96BIBIinU6lI2WkuxD3kM8TK239ah3fpNje2NM99Mg4c9uhbbkn06H6AqmIOh3cn3bflqNwUkPNy4RdQ3WmG1vOPrJg-ol3_FnuiSBs_gFD26fKr_lcHUtM9zNcIdUPd5tO_-zdIw_LkJsm0nxrsDXFLcLpqQ9lRMakL0z4l01QGh-YrGA2Ng';
-const AGENT_SESSION_ID  = 'xkAbuDPcrnUK7BxwWWn02';
-const AGENT_PROJECT_ID  = 7651250950921011243;
+// 开发环境走 Vite 代理（/coze-api → https://bhydrjmw8y.coze.site）避免 CORS
+// 生产环境走 Cloudflare Worker CORS 代理
+const AGENT_API_URL    = import.meta.env.DEV
+  ? '/coze-api/stream_run'
+  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/stream_run';
+const AGENT_TOKEN      = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjA2YjNiMmZlLTVhZjYtNGFiMy05ODM5LWRmNDZiNTMzODBlNyJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbIjFNcTFLemU5SnV6RWhsMUdwVE1KcWZOb1REdHJPSGxhIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzgxNDUxOTAzLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjUxMjY0ODUzNzM4MjU4NDczIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3NjUxMjc3NjY0NDQ3MTAzMDExIn0.yOKj8zrdXjVZGuEPqBOZl9I6X6spT18aSR-oJYfol2TYSVUjC8iZGcRUHO_1zbTjLp2GzKRv28PH2RWE7mE7Sbk4vRZ8YyH27egSZ5WeLx7eKgH0K8V7MIQ8njYNzE98FJhJkppYLNy0jGrR_J63-qusb7y22BZlQ96BIBIinU6lI2WkuxD3kM8TK239ah3fpNje2NM99Mg4c9uhbbkn06H6AqmIOh3cn3bflqNwUkPNy4RdQ3WmG1vOPrJg-ol3_FnuiSBs_gFD26fKr_lcHUtM9zNcIdUPd5tO_-zdIw_LkJsm0nxrsDXFLcLpqQ9lRMakL0z4l01QGh-YrGA2Ng';
+const AGENT_SESSION_ID = 'T4o2YUXKoaouoMdnnae_4';
+const AGENT_PROJECT_ID = '7651250950921011243';
 
 async function callAgentStreaming(text, onChunk, onDone, onError) {
   try {
@@ -285,6 +289,7 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
       headers: {
         'Authorization': `Bearer ${AGENT_TOKEN}`,
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
       },
       body: JSON.stringify({
         content: {
@@ -297,7 +302,11 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
         project_id: AGENT_PROJECT_ID,
       }),
     });
-    if (!res.ok) { onError(`请求失败 (${res.status})`); return; }
+    if (!res.ok) {
+      const errText = await res.text();
+      onError(`请求失败 (${res.status}): ${errText.slice(0, 100)}`);
+      return;
+    }
     const reader = res.body.getReader();
     const dec = new TextDecoder('utf-8');
     let buf = '';
@@ -305,21 +314,26 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
       const { done, value } = await reader.read();
       if (done) break;
       buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop() ?? '';
-      for (const ln of lines) {
-        // 只处理 data: 行，跳过 event: 行
-        if (!ln.startsWith('data:')) continue;
-        const raw = ln.slice(5).trim();
+      // SSE 以 \n\n 为块分隔符
+      const blocks = buf.split('\n\n');
+      buf = blocks.pop() ?? '';
+      for (const block of blocks) {
+        // 取出块内所有 data: 行的内容
+        const dataLines = block
+          .split('\n')
+          .filter(ln => ln.startsWith('data:'))
+          .map(ln => ln.slice(5).trim());
+        if (dataLines.length === 0) continue;
+        const raw = dataLines.join('\n');
         if (!raw || raw === '[DONE]') continue;
         try {
           const p = JSON.parse(raw);
-          // 实际格式：{ type: 'answer', content: { answer: '嗨', ... }, finish: false }
+          // answer 块：把文字流式输出
           if (p.type === 'answer' && p.content?.answer) {
             onChunk(p.content.answer);
           }
-          // finish: true 且非 answer 类型 = 流结束
-          if (p.finish === true && p.type !== 'answer') {
+          // 最后一个 answer finish=true 或 message_end → 结束
+          if (p.type === 'message_end' || (p.type === 'answer' && p.finish === true)) {
             onDone();
             return;
           }
