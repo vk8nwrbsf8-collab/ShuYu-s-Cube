@@ -247,10 +247,18 @@ function MusicSubPage({ onBack }) {
   const bottomOffset = 72 + (playingTrack ? 64 : 0);
 
   return (
+    // position: fixed + bottom 精确锁定底部边界在播放器上方，任意窗口尺寸都有效
     <div
-      className="w-full h-full flex flex-col"
       style={{
-        padding: isMobile ? '24px 16px 0' : `40px 60px ${bottomOffset}px`,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: bottomOffset,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: isMobile ? '24px 16px 0' : '40px 60px 0',
+        overflow: 'hidden',
       }}
     >
 
@@ -262,7 +270,7 @@ function MusicSubPage({ onBack }) {
         Music
       </h2>
 
-      {/* 内容区：桌面端 overflow-hidden 约束双栏高度；移动端 scroll-container 内加底部占位 */}
+      {/* 内容区：overflow-hidden 约束双栏/单栏高度，内部 scroll-container 在边界内滚动 */}
       <div
         className={isMobile ? 'flex flex-col min-h-0 scroll-container' : 'flex gap-10 overflow-hidden'}
         style={{ flex: 1, minHeight: 0 }}
@@ -387,8 +395,6 @@ function MusicSubPage({ onBack }) {
           </div>
         </div>
 
-        {/* 移动端底部占位：为 PlayerBar + BottomNav 预留空间 */}
-        {isMobile && <div style={{ flexShrink: 0, height: bottomOffset }} />}
       </div>
 
       {/* 播放器条现在在 App 层全局渲染，此处无需重复 */}
