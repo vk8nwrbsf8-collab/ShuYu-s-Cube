@@ -248,13 +248,9 @@ function MusicSubPage({ onBack }) {
 
   return (
     <div
-      className="w-full flex flex-col"
+      className="w-full h-full flex flex-col"
       style={{
-        position: 'absolute',
-        inset: 0,
-        bottom: bottomOffset,
-        padding: isMobile ? '24px 16px 0' : '40px 60px 0',
-        overflow: 'hidden',
+        padding: isMobile ? '24px 16px 0' : `40px 60px ${bottomOffset}px`,
       }}
     >
 
@@ -266,7 +262,7 @@ function MusicSubPage({ onBack }) {
         Music
       </h2>
 
-      {/* 内容区：overflow-hidden 约束内部 scroll-container 不超出 */}
+      {/* 内容区：桌面端 overflow-hidden 约束双栏高度；移动端 scroll-container 内加底部占位 */}
       <div
         className={isMobile ? 'flex flex-col min-h-0 scroll-container' : 'flex gap-10 overflow-hidden'}
         style={{ flex: 1, minHeight: 0 }}
@@ -390,6 +386,9 @@ function MusicSubPage({ onBack }) {
             </div>
           </div>
         </div>
+
+        {/* 移动端底部占位：为 PlayerBar + BottomNav 预留空间 */}
+        {isMobile && <div style={{ flexShrink: 0, height: bottomOffset }} />}
       </div>
 
       {/* 播放器条现在在 App 层全局渲染，此处无需重复 */}
