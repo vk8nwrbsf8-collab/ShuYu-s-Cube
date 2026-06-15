@@ -248,8 +248,14 @@ function MusicSubPage({ onBack }) {
 
   return (
     <div
-      className="w-full h-full flex flex-col"
-      style={{ padding: isMobile ? `24px 16px ${bottomOffset}px` : `40px 60px ${bottomOffset}px` }}
+      className="w-full flex flex-col"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        bottom: bottomOffset,
+        padding: isMobile ? '24px 16px 0' : '40px 60px 0',
+        overflow: 'hidden',
+      }}
     >
 
       <BackButton onClick={onBack} />
