@@ -7,6 +7,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { destinations } from '../data/journey';
 
+// 处理 public 目录下的静态资源路径（兼容 GitHub Pages 子路径部署）
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 // ──────────────────────────────────────────────────────────
 // 手绘图标 SVG 合集
 // ──────────────────────────────────────────────────────────
@@ -223,7 +226,7 @@ function DayMasonry({ day, dayIdx, dayRef }) {
       style={{ marginBottom: 8, borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}
     >
       <img
-        src={src}
+        src={assetUrl(src)}
         alt=""
         style={{ width: '100%', display: 'block', objectFit: 'cover' }}
         loading="lazy"

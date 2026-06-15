@@ -12,6 +12,9 @@ import { useState, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { films, albums, bassCovers, bassCollectionUrl } from '../data/hobbies';
 
+// 处理 public 目录下的静态资源路径（兼容 GitHub Pages 子路径部署）
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 // ──────────────────────────────────────────────────────────
 // SVG 图标：场记板
 // ──────────────────────────────────────────────────────────
@@ -152,7 +155,7 @@ function FilmSubPage({ onBack }) {
               >
                 {film.poster ? (
                   <img
-                    src={film.poster}
+                    src={assetUrl(film.poster)}
                     alt={film.title}
                     style={{
                       position: 'absolute', inset: 0,

@@ -7,7 +7,10 @@ import { albums } from '../data/hobbies';
 
 const PlayerContext = createContext(null);
 
-const NETEASE_API = '/netease-api';
+// 线上使用支持 CORS 的公共 API，本地开发使用代理
+const NETEASE_API = import.meta.env.DEV
+  ? '/netease-api'
+  : 'https://music-api.gdstudio.xyz/api.php?types=url&source=netease&id=';
 
 export function fmtTime(sec) {
   if (!sec || isNaN(sec)) return '0:00';
@@ -42,9 +45,18 @@ export function PlayerProvider({ children }) {
       trackIdx: albumTrackIdx,
     });
     try {
-      const res  = await fetch(`${NETEASE_API}/song/url?id=${track.id}`);
-      const data = await res.json();
-      const url  = data?.data?.[0]?.url;
+      let url;
+      if (import.meta.env.DEV) {
+        // 本地开发：走代理访问本地 NeteaseCloudMusicApi
+        const res  = await fetch(`${NETEASE_API}/song/url?id=${track.id}`);
+        const data = await res.json();
+        url = data?.data?.[0]?.url;
+      } else {
+        // 线上：使用支持 CORS 的公共 API
+        const res  = await fetch(`${NETEASE_API}${track.id}`);
+        const data = await res.json();
+        url = data?.url;
+      }
       if (!url) throw new Error('无版权或需登录');
       setAudioUrl(url);
       setIsPlaying(true);
