@@ -24,17 +24,33 @@ html, body, #root {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.3) transparent;
+  scrollbar-color: rgba(255,255,255,0.25) #000;
 }
 .scroll-container::-webkit-scrollbar {
   width: 4px;
 }
 .scroll-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: #000;
 }
 .scroll-container::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.25);
   border-radius: 2px;
+}
+
+/* 全局隐藏原生滚动条（非 scroll-container 的区域），统一用黑色 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-corner {
+  background: #000;
 }
 
 /* ==============================

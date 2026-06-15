@@ -223,13 +223,23 @@ function DayMasonry({ day, dayIdx, dayRef }) {
     <div
       key={`${dayIdx}-${pi}`}
       ref={isFirst ? ref : null}
-      style={{ marginBottom: 8, borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ marginBottom: 8, borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', background: '#111' }}
     >
+      {/* 骨架屏占位：图片加载前显示深色背景 */}
+      <div style={{ paddingTop: '75%', background: '#111' }} />
       <img
         src={assetUrl(src)}
         alt=""
-        style={{ width: '100%', display: 'block', objectFit: 'cover' }}
         loading="lazy"
+        decoding="async"
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          display: 'block', objectFit: 'cover',
+          opacity: 0,
+          transition: 'opacity 0.35s ease',
+        }}
+        onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
       />
     </div>
   );
@@ -374,7 +384,8 @@ function DestinationDetail({ dest, onBack }) {
         {/* ── 右侧：双列瀑布流 ── */}
         <div
           ref={scrollRef}
-          style={{ flex: 1, overflowY: 'auto', paddingRight: 6 }}
+          className="scroll-container"
+          style={{ flex: 1, paddingRight: 6 }}
           onScroll={(e) => {
             // 根据滚动位置更新 activeDay
             const containerTop = e.currentTarget.scrollTop;

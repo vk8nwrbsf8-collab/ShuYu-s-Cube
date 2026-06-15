@@ -157,12 +157,17 @@ function FilmSubPage({ onBack }) {
                   <img
                     src={assetUrl(film.poster)}
                     alt={film.title}
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       position: 'absolute', inset: 0,
                       width: '100%', height: '100%',
                       objectFit: 'cover', objectPosition: 'center top',
                       display: 'block',
+                      opacity: 0,
+                      transition: 'opacity 0.35s ease',
                     }}
+                    onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
                   />
                 ) : (
                   <div style={{ position: 'absolute', inset: 0, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
