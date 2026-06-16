@@ -296,9 +296,39 @@ function getAgentUserId() {
 }
 
 async function callAgentStreaming(text, onChunk, onDone, onError) {
+  let gotAnswer = false;
+  let finished = false;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+
+  const emitChunk = (chunk) => {
+    if (!chunk) return;
+    gotAnswer = true;
+    onChunk(chunk);
+  };
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timeout);
+    if (!gotAnswer) {
+      onError('暂时没有收到回复，可以再试一次～');
+      return;
+    }
+    onDone();
+  };
+
+  const extractAnswer = (payload) => {
+    if (!payload || payload.type !== 'answer') return '';
+    if (typeof payload.content === 'string') return payload.content;
+    if (typeof payload.content?.answer === 'string') return payload.content.answer;
+    return '';
+  };
+
   try {
     const res = await fetch(AGENT_API_URL, {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
@@ -313,6 +343,7 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
       }),
     });
     if (!res.ok) {
+      clearTimeout(timeout);
       const errText = await res.text();
       onError(`请求失败 (${res.status}): ${errText.slice(0, 150)}`);
       return;
@@ -343,25 +374,34 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
         if (!dataStr || dataStr === '[DONE]') continue;
         try {
           const p = JSON.parse(dataStr);
-          // 流式文字块
-          if (eventType === 'conversation.message.delta' && p.type === 'answer' && p.content) {
-            onChunk(p.content);
+          // Coze v3 流式文字块
+          if (eventType === 'conversation.message.delta') {
+            emitChunk(extractAnswer(p));
+            continue;
+          }
+          // Coze v3 有时只在 completed 事件里给完整答案
+          if (eventType === 'conversation.message.completed' && !gotAnswer) {
+            emitChunk(extractAnswer(p));
+          }
+          // 兼容旧版/代理转写格式
+          if (!eventType || eventType === 'message') {
+            emitChunk(extractAnswer(p));
           }
           // 会话完成
           if (eventType === 'conversation.chat.completed' || eventType === 'done') {
-            onDone();
-            return;
-          }
-          // 兜底：message completed 且 type=answer 也触发结束
-          if (eventType === 'conversation.message.completed' && p.type === 'answer') {
-            onDone();
+            finish();
             return;
           }
         } catch { /* 忽略解析失败的行 */ }
       }
     }
-    onDone();
-  } catch (e) { onError('网络错误：' + e.message); }
+    finish();
+  } catch (e) {
+    clearTimeout(timeout);
+    onError(e.name === 'AbortError'
+      ? '连接超时了，可以再试一次～'
+      : '网络错误：' + e.message);
+  }
 }
 
 // ─────────────────────────────────────────────
