@@ -11,6 +11,7 @@
  * and set VITE_COZE_API_URL if you do not use the default URL in HomePage.jsx.
  */
 const UPSTREAM = 'https://api.coze.cn';
+const UPSTREAM_TIMEOUT_MS = 35000;
 
 function corsHeaders(request, env) {
   const configuredOrigin = env.ALLOWED_ORIGIN || '*';
@@ -23,7 +24,7 @@ function corsHeaders(request, env) {
   const headers = {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Accept',
+    'Access-Control-Allow-Headers': 'Content-Type, Accept, Authorization',
     'Access-Control-Max-Age': '86400',
   };
   if (allowOrigin !== '*') headers.Vary = 'Origin';
@@ -75,11 +76,25 @@ export default {
     headers.set('Content-Type', 'application/json');
     headers.set('Accept', request.headers.get('Accept') || 'text/event-stream');
 
-    const upstreamRes = await fetch(targetUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+    let upstreamRes;
+    try {
+      upstreamRes = await fetch(targetUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      const timedOut = error.name === 'AbortError';
+      return jsonResponse(request, env, {
+        error: timedOut ? 'Coze upstream timeout' : 'Coze upstream request failed',
+        message: error.message,
+      }, timedOut ? 504 : 502);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     // Add CORS headers to response
     const newHeaders = new Headers(upstreamRes.headers);

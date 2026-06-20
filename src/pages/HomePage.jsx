@@ -301,6 +301,19 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45000);
 
+  const formatApiError = (payload, fallback = 'Agent 连接失败，可以稍后再试～') => {
+    if (!payload) return fallback;
+    const code = payload.code ?? payload.error_code ?? payload.status;
+    const message = payload.msg || payload.message || payload.error || payload.detail?.message || '';
+    if (code === 4101 || /token|auth|authorization/i.test(String(message))) {
+      return 'Agent 认证失败：令牌无效或已过期。';
+    }
+    if (/Missing COZE_PAT/i.test(String(message))) {
+      return 'Agent 代理还没有配置 Coze 令牌。';
+    }
+    return message ? `Agent 请求失败：${message}` : fallback;
+  };
+
   const emitChunk = (chunk) => {
     if (!chunk) return;
     gotAnswer = true;
@@ -345,9 +358,22 @@ async function callAgentStreaming(text, onChunk, onDone, onError) {
     if (!res.ok) {
       clearTimeout(timeout);
       const errText = await res.text();
-      onError(`请求失败 (${res.status}): ${errText.slice(0, 150)}`);
+      try {
+        onError(formatApiError(JSON.parse(errText), `请求失败 (${res.status})`));
+      } catch {
+        onError(`请求失败 (${res.status}): ${errText.slice(0, 150)}`);
+      }
       return;
     }
+
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      clearTimeout(timeout);
+      const payload = await res.json().catch(() => null);
+      onError(formatApiError(payload));
+      return;
+    }
+
     const reader = res.body.getReader();
     const dec = new TextDecoder('utf-8');
     let buf = '';
