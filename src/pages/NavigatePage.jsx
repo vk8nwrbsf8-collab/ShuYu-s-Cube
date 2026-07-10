@@ -186,7 +186,7 @@ export default function NavigatePage() {
       <div className="flex items-center gap-8 mb-8">
         {[
           { id: 'edu', label: '教育经历' },
-          { id: 'int', label: '工作经历' },
+          { id: 'int', label: '实习经历' },
         ].map(({ id, label }) => (
           <button
             key={id}

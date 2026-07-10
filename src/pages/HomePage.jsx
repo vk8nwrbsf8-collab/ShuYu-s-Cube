@@ -273,12 +273,19 @@ function SmallCubeBtn({ onClick }) {
 // ─────────────────────────────────────────────
 // Agent API  (Coze.cn 官方 Bot API v3/chat)
 // ─────────────────────────────────────────────
-// 开发环境走 Vite 代理（/coze-api -> https://api.coze.cn）避免 CORS
-// 生产环境走 Cloudflare Worker，由服务端代理注入 Coze PAT
+// 开发环境走 Vite 代理（/coze-api -> https://api.coze.cn）避免 CORS。
+// Vercel 走同域 /api/coze-chat，GitHub Pages 继续走 Cloudflare Worker。
 const DEFAULT_AGENT_BOT_ID = '7651604061602611200';
-const AGENT_API_URL = import.meta.env.VITE_COZE_API_URL || (import.meta.env.DEV
-  ? '/coze-api/v3/chat'
-  : 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat');
+
+function getDefaultAgentApiUrl() {
+  if (import.meta.env.DEV) return '/coze-api/v3/chat';
+  if (typeof window !== 'undefined' && !window.location.hostname.endsWith('github.io')) {
+    return '/api/coze-chat';
+  }
+  return 'https://coze-cors-proxy.vk8nwrbsf8.workers.dev/v3/chat';
+}
+
+const AGENT_API_URL = import.meta.env.VITE_COZE_API_URL || getDefaultAgentApiUrl();
 const AGENT_BOT_ID = import.meta.env.VITE_COZE_BOT_ID || DEFAULT_AGENT_BOT_ID;
 const AGENT_USER_ID_KEY = 'shuyu_cube_agent_user_id';
 
